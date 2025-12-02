@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>每日健康打卡 - 健康助手 2.0</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-success mb-4 shadow-sm">
+    <div class="container">
+        <span class="navbar-brand mb-0 h1 fw-bold">Health Assistant 2.0</span>
+        
+        <div class="d-flex align-items-center">
+            <a href="/dashboard" class="btn btn-outline-light btn-sm me-2">🏠 返回首页</a>
+            <a href="/plan" class="btn btn-warning btn-sm me-2 text-dark fw-bold">✨ AI 顾问</a>
+            <a href="/community" class="btn btn-info btn-sm me-3 text-white fw-bold">💬 社区</a>
+
+            <span class="text-white me-2">你好，{{ nickname }}</span>
+            <a href="/settings" class="btn btn-sm btn-outline-light me-2" title="个人设置">⚙️</a>
+            <a href="/logout" class="btn btn-sm btn-danger">退出</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-9">
+            
+            <div class="card shadow mb-5">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-success">📝 记录今日数据</h5>
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="syncDeviceData()">
+                        <i class="bi bi-watch"></i> 模拟从健康App导入
+                    </button>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">日期</label>
+                                <input type="date" class="form-control" id="date" name="date" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">体重 (kg)</label>
+                                <input type="number" step="0.1" class="form-control" id="weight" name="weight" placeholder="0.0" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">步数</label>
+                                <input type="number" class="form-control" id="steps" name="steps" placeholder="0" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">睡眠时长 (h)</label>
+                                <input type="number" step="0.1" class="form-control" id="sleep_hours" name="sleep_hours" placeholder="例如: 7.5" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">静息心率 (bpm)</label>
+                                <input type="number" class="form-control" id="heart_rate" name="heart_rate" placeholder="例如: 72" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">消耗卡路里</label>
+                                <input type="number" class="form-control" id="calories" name="calories" placeholder="0" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">收缩压 (高压 mmHg)</label>
+                                <input type="number" class="form-control" id="blood_pressure_high" name="bp_high" placeholder="120" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">舒张压 (低压 mmHg)</label>
+                                <input type="number" class="form-control" id="blood_pressure_low" name="bp_low" placeholder="80" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">身体感觉 / 备注</label>
+                            <input type="text" class="form-control" id="note" name="note" placeholder="例如：今天状态不错，感觉精力充沛...">
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 fw-bold py-2">💾 保存全部数据</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">📊 历史记录档案</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped mb-0 text-center align-middle">
+                            <thead class="table-success text-nowrap">
+                                <tr>
+                                    <th>日期</th>
+                                    <th>体重</th>
+                                    <th>步数</th>
+                                    <th>睡眠</th>
+                                    <th>心率/血压</th>
+                                    <th>备注</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in records %}
+                                <tr>
+                                    <td class="fw-bold">{{ record.date }}</td>
+                                    <td>{{ record.weight }}</td>
+                                    <td>{{ record.steps }}</td>
+                                    <td>{{ record.sleep_hours or '-' }}h</td>
+                                    <td>
+                                        {% if record.heart_rate %}
+                                            <span class="badge bg-info text-dark">{{ record.heart_rate }}</span>
+                                        {% endif %}
+                                        <br>
+                                        {% if record.blood_pressure_high %}
+                                            <small class="text-muted">{{ record.blood_pressure_high }}/{{ record.blood_pressure_low }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-start text-muted small" style="max-width: 150px;">{{ record.note }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        还没有记录哦，快去上方添加第一条完整数据吧！
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function syncDeviceData() {
+    // 1. 获取按钮元素，改变状态
+    const btn = document.querySelector('button[onclick="syncDeviceData()"]');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 同步中...';
+    btn.disabled = true;
+
+    // 2. 调用后端接口
+    fetch('/api/simulate_import')
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                const data = result.data;
+                
+                // === 新增：自动获取当前日期并填充 (格式 YYYY-MM-DD) ===
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const todayStr = `${year}-${month}-${day}`;
+                
+                // 填充日期
+                const dateInput = document.getElementById('date');
+                if(dateInput) dateInput.value = todayStr;
+
+                // 3. 自动填充其他表单字段
+                document.getElementById('weight').value = data.weight;
+                document.getElementById('steps').value = data.steps;
+                document.getElementById('calories').value = data.calories;
+                document.getElementById('sleep_hours').value = data.sleep_hours;
+                document.getElementById('heart_rate').value = data.heart_rate;
+                document.getElementById('blood_pressure_high').value = data.bp_high;
+                document.getElementById('blood_pressure_low').value = data.bp_low;
+                document.getElementById('note').value = data.note;
+
+                // 4. 成功提示
+                alert(result.message);
+            } else {
+                alert('同步失败：' + (result.message || '未知错误'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('连接设备接口出错，请检查网络或后台服务');
+        })
+        .finally(() => {
+            // 5. 恢复按钮状态
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+}
+</script>
+
+</body>
+</html>

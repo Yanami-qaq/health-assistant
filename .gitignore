@@ -1,0 +1,17 @@
+# 1. 排除虚拟环境
+venv/
+.env
+
+# 2. 排除 Python 编译缓存 (垃圾文件)
+__pycache__/
+*.py[cod]
+instance/
+.pytest_cache/
+
+# 3. 排除 IDE 配置文件
+.idea/
+.vscode/
+
+# 4. !!! 极其重要 !!! 排除含有密码和 Key 的配置文件
+# 既然 config.py 里有数据库密码和 API Key，绝对不能上传！
+config.py

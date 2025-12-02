@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>个人信息设置</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-secondary mb-4">
+    <div class="container">
+        <span class="navbar-brand mb-0 h1">⚙️ 个人设置</span>
+        <div>
+            <a href="/dashboard" class="text-white me-3 text-decoration-none">🏠 返回首页</a>
+            <a href="/logout" class="btn btn-sm btn-danger">退出</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">修改个人资料</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">用户 ID</label>
+                            <input type="text" class="form-control" value="{{ user.id }}" disabled>
+                            <div class="form-text">ID 是您的系统唯一标识，无法修改。</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">昵称</label>
+                            <input type="text" class="form-control" name="nickname" value="{{ user.nickname }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">性别</label>
+                            <select class="form-select" name="gender">
+                                <option value="未知" {% if user.gender == '未知' %}selected{% endif %}>保密</option>
+                                <option value="男" {% if user.gender == '男' %}selected{% endif %}>男</option>
+                                <option value="女" {% if user.gender == '女' %}selected{% endif %}>女</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">身高 (cm)</label>
+                            <input type="number" step="0.1" class="form-control" name="height" value="{{ user.height or '' }}" placeholder="例如: 175">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">健康状况备注</label>
+                            <textarea class="form-control" name="medical_history" rows="2" placeholder="例如：高血压、对海鲜过敏、膝盖有旧伤...">{{ user.medical_history or '' }}</textarea>
+                            <div class="form-text">AI 顾问会根据这些信息避开不适合您的建议。</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">💾 保存修改</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

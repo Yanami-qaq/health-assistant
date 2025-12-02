@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>健康社区 - 大家一起聊</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-info mb-4">
+    <div class="container">
+        <span class="navbar-brand mb-0 h1">💬 健康社区</span>
+        <div>
+            <a href="/dashboard" class="text-white me-3 text-decoration-none">🏠 返回首页</a>
+            <span class="text-white">当前身份：{{ nickname }}</span>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow sticky-top" style="top: 20px;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">✏️ 发布新话题</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">标题</label>
+                            <input type="text" class="form-control" name="title" placeholder="例如：我今天瘦了1斤！" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">内容</label>
+                            <textarea class="form-control" name="content" rows="5" placeholder="分享你的健康心得..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">🚀 立即发布</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <h4 class="mb-3">🔥 最新动态</h4>
+            
+            {% for post in posts %}
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">{{ post.title }}</h5>
+                    <p class="card-text">{{ post.content }}</p>
+                    <div class="text-muted small d-flex justify-content-between">
+                        <span>👤 作者：{{ post.user.nickname }}</span>
+                        <span>🕒 时间：{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning text-center">
+                还没有人发帖，快来抢沙发！🛋️
+            </div>
+            {% endfor %}
+            
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
