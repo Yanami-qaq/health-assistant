@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify, flash
 from datetime import datetime
 from app.extensions import db
-from app.models import User, HealthRecord, HealthPlan, Post
+from app.models import User, HealthRecord, HealthPlan, Post, PostLike, Comment
 from app.services.ai_service import call_deepseek_advisor
 
 bp = Blueprint('main', __name__)
@@ -144,6 +144,55 @@ def settings():
         return redirect(url_for('main.settings'))
         
     return render_template('settings.html', user=user)
+
+# === 新增功能 1: 点赞/取消点赞接口 ===
+@bp.route('/post/<int:post_id>/like', methods=['POST'])
+@login_required
+def like_post(post_id):
+    user_id = session['user_id']
+    post = Post.query.get_or_404(post_id)
+    
+    # 检查是否已经点过赞
+    existing_like = PostLike.query.filter_by(user_id=user_id, post_id=post_id).first()
+    
+    liked = False
+    if existing_like:
+        # 如果已点赞，就取消 (删除记录)
+        db.session.delete(existing_like)
+        liked = False
+    else:
+        # 如果没点赞，就添加
+        new_like = PostLike(user_id=user_id, post_id=post_id)
+        db.session.add(new_like)
+        liked = True
+        
+    db.session.commit()
+    
+    # 返回 JSON 给前端 JS 更新界面，不用刷新网页
+    return jsonify({
+        'status': 'success',
+        'liked': liked,
+        'count': post.likes.count()
+    })
+
+# === 新增功能 2: 发表评论接口 ===
+@bp.route('/post/<int:post_id>/comment', methods=['POST'])
+@login_required
+def add_comment(post_id):
+    content = request.form.get('content')
+    if not content:
+        flash("评论内容不能为空")
+        return redirect(url_for('main.community'))
+        
+    new_comment = Comment(
+        user_id=session['user_id'],
+        post_id=post_id,
+        content=content
+    )
+    db.session.add(new_comment)
+    db.session.commit()
+    
+    return redirect(url_for('main.community'))
 
 # --- 管理员路由 ---
 @bp.route('/admin/dashboard')
