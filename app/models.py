@@ -12,6 +12,8 @@ class User(db.Model):
     height = db.Column(db.Float)
     medical_history = db.Column(db.Text)
     is_admin = db.Column(db.Boolean, default=False)
+    is_banned = db.Column(db.Boolean, default=False)
+    can_post = db.Column(db.Boolean, default=True)
     
     # 关联
     records = db.relationship('HealthRecord', backref='user', lazy=True)
@@ -44,6 +46,7 @@ class Post(db.Model):
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_announcement = db.Column(db.Boolean, default=False)
     
     # 新增关联：级联删除 (帖子删了，评论和点赞也一起删)
     comments = db.relationship('Comment', backref='post', lazy=True, cascade="all, delete-orphan", order_by="Comment.created_at.asc()")

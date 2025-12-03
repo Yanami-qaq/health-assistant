@@ -120,14 +120,55 @@ def plan():
 @bp.route('/community', methods=['GET', 'POST'])
 @login_required
 def community():
+    user = User.query.get(session['user_id'])
+
     if request.method == 'POST':
-        new_post = Post(user_id=session['user_id'], title=request.form.get('title'), content=request.form.get('content'))
+        # === 改动 1: 禁言拦截 (管理员拥有豁免权) ===
+        # 逻辑：如果不是管理员，且被禁言了，才拦截
+        if not user.is_admin and not user.can_post:
+            flash("🚫 您已被管理员禁言，无法发布新内容！")
+            return redirect(url_for('main.community'))
+
+        # 获取数据
+        title = request.form.get('title')
+        content = request.form.get('content')
+
+        if not title or not content:
+            flash("标题和内容不能为空")
+            return redirect(url_for('main.community'))
+
+        # === 改动 2: 处理公告标记 (仅限管理员) ===
+        is_announcement = False
+        if user.is_admin:
+            # Checkbox 如果被勾选，值为 'on'；没勾选则为 None
+            is_announcement = (request.form.get('is_announcement') == 'on')
+
+        new_post = Post(
+            user_id=user.id,
+            title=title,
+            content=content,
+            is_announcement=is_announcement # 写入数据库
+        )
         db.session.add(new_post)
         db.session.commit()
-        return redirect(url_for('main.community'))
         
-    all_posts = Post.query.order_by(Post.created_at.desc()).all()
-    return render_template('community.html', nickname=session.get('nickname'), posts=all_posts)
+        if is_announcement:
+            flash("📢 公告发布成功！")
+        else:
+            flash("发布成功！")
+        
+        return redirect(url_for('main.community'))
+
+    # === 展示帖子列表 (GET) ===
+    # 优化排序：公告置顶 (is_announcement desc)，然后按时间倒序
+    # desc() 表示 True 在前 (在 MySQL 中 True=1, False=0)
+    all_posts = Post.query.order_by(Post.is_announcement.desc(), Post.created_at.desc()).all()
+    
+    return render_template('community.html', 
+                           nickname=user.nickname, 
+                           posts=all_posts, 
+                           user=user,
+                           current_user=user)
 
 @bp.route('/settings', methods=['GET', 'POST'])
 @login_required
@@ -203,16 +244,103 @@ def admin_dashboard():
     users = User.query.all()
     return render_template('admin_dashboard.html', users=users)
 
+# === 新增功能 1: 设置/取消管理员 ===
+@bp.route('/admin/toggle_admin/<int:user_id>')
+@login_required
+def toggle_admin(user_id):
+    # 权限检查
+    if not session.get('is_admin'):
+        return "🚫 权限不足"
+    
+    user = User.query.get_or_404(user_id)
+    
+    # 保护机制：不能取消自己的管理员权限
+    if user.id == session['user_id']:
+        flash("不能取消自己的管理员权限")
+        return redirect(url_for('main.admin_dashboard'))
+
+    user.is_admin = not user.is_admin # 取反：是变否，否变是
+    db.session.commit()
+    
+    action = "设为管理员" if user.is_admin else "降为普通用户"
+    flash(f"已将用户 {user.nickname} {action}")
+    return redirect(url_for('main.admin_dashboard'))
+
+# === 新增功能 2: 封禁/解封用户 ===
+@bp.route('/admin/toggle_ban/<int:user_id>')
+@login_required
+def toggle_ban(user_id):
+    if not session.get('is_admin'):
+        return "🚫 权限不足"
+        
+    user = User.query.get_or_404(user_id)
+    
+    if user.id == session['user_id']:
+        flash("不能封禁自己")
+        return redirect(url_for('main.admin_dashboard'))
+        
+    user.is_banned = not user.is_banned
+    db.session.commit()
+    
+    action = "封禁" if user.is_banned else "解封"
+    flash(f"已{action}用户 {user.nickname}")
+    return redirect(url_for('main.admin_dashboard'))
+
+# === 功能 3: 删除用户 (确保这个函数存在) ===
 @bp.route('/admin/delete_user/<int:user_id>')
 @login_required
 def delete_user(user_id):
     if not session.get('is_admin'):
         return "权限不足"
+        
+    user = User.query.get_or_404(user_id)
     
-    # 级联删除逻辑
+    if user.id == session['user_id']:
+        flash("不能删除自己")
+        return redirect(url_for('main.admin_dashboard'))
+
+    # 级联删除所有相关数据
     HealthRecord.query.filter_by(user_id=user_id).delete()
     HealthPlan.query.filter_by(user_id=user_id).delete()
     Post.query.filter_by(user_id=user_id).delete()
-    User.query.filter_by(id=user_id).delete()
+    Comment.query.filter_by(user_id=user_id).delete() # 记得删评论
+    PostLike.query.filter_by(user_id=user_id).delete() # 记得删点赞
+    
+    db.session.delete(user)
     db.session.commit()
+    
+    flash(f"已彻底删除用户 {user.nickname}")
     return redirect(url_for('main.admin_dashboard'))
+
+# === 新增功能 4: 禁言/解除禁言 ===
+@bp.route('/admin/toggle_posting/<int:user_id>')
+@login_required
+def toggle_posting(user_id):
+    if not session.get('is_admin'):
+        return "🚫 权限不足"
+    
+    user = User.query.get_or_404(user_id)
+    if user.is_admin:
+        flash("无法禁言管理员")
+        return redirect(url_for('main.admin_dashboard'))
+        
+    user.can_post = not user.can_post # 取反
+    db.session.commit()
+    
+    status = "解除禁言" if user.can_post else "禁言"
+    flash(f"已对用户 {user.nickname} {status}")
+    return redirect(url_for('main.admin_dashboard'))
+
+# === 新增功能 5: 管理员删帖 ===
+@bp.route('/admin/delete_post/<int:post_id>')
+@login_required
+def delete_post(post_id):
+    if not session.get('is_admin'):
+        return "🚫 权限不足"
+        
+    post = Post.query.get_or_404(post_id)
+    db.session.delete(post)
+    db.session.commit()
+    
+    flash("帖子已强制删除")
+    return redirect(url_for('main.community'))
