@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
         body {
-            /* 注册页使用稍微不同的渐变，区分登录页 */
             background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
             min-height: 100vh;
             display: flex;
@@ -16,79 +15,17 @@
             justify-content: center;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
-        .register-card {
-            border: none;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        .register-sidebar {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            padding: 40px;
-            position: relative;
-        }
-        .sidebar-circle {
-            position: absolute;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
-        }
-        .form-control {
-            border-radius: 10px;
-            padding: 12px;
-            background-color: #f8f9fa;
-            border: 1px solid #eee;
-            padding-left: 15px;
-        }
-        .form-control:focus {
-            box-shadow: none;
-            border-color: #667eea;
-            background-color: #fff;
-        }
-        .input-group-text {
-            border-radius: 10px 0 0 10px;
-            border: 1px solid #eee;
-            background-color: #f8f9fa;
-            color: #888;
-        }
-        /* 修复 input group 圆角问题 */
-        .input-group .input-group-text {
-            border-right: 0;
-        }
-        .input-group .form-control {
-            border-radius: 0 10px 10px 0;
-            border-left: 0;
-        }
-
-        .btn-register {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            border: none;
-            border-radius: 10px;
-            padding: 12px;
-            font-weight: bold;
-            color: white;
-            transition: all 0.3s;
-        }
-        .btn-register:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-            color: white;
-        }
-
-        .login-link {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-        .login-link:hover {
-            color: #764ba2;
-            text-decoration: underline;
-        }
+        .register-card { border: none; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); overflow: hidden; }
+        .register-sidebar { background: linear-gradient(45deg, #667eea, #764ba2); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; padding: 40px; position: relative; }
+        .sidebar-circle { position: absolute; background: rgba(255,255,255,0.1); border-radius: 50%; }
+        .form-control { border-radius: 10px; padding: 12px; background-color: #f8f9fa; border: 1px solid #eee; padding-left: 15px; }
+        .form-control:focus { box-shadow: none; border-color: #667eea; background-color: #fff; }
+        .input-group-text { border-radius: 10px 0 0 10px; border: 1px solid #eee; background-color: #f8f9fa; color: #888; border-right: 0; }
+        .input-group .form-control { border-radius: 0 10px 10px 0; border-left: 0; }
+        .btn-register { background: linear-gradient(45deg, #667eea, #764ba2); border: none; border-radius: 10px; padding: 12px; font-weight: bold; color: white; transition: all 0.3s; }
+        .btn-register:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); color: white; }
+        .login-link { color: #667eea; text-decoration: none; font-weight: bold; transition: 0.2s; }
+        .login-link:hover { color: #764ba2; text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -101,22 +38,17 @@
                     <div class="col-md-5 d-none d-md-flex register-sidebar">
                         <div class="sidebar-circle" style="width: 150px; height: 150px; top: -20px; left: -20px;"></div>
                         <div class="sidebar-circle" style="width: 100px; height: 100px; bottom: 30px; right: 30px;"></div>
-
                         <div class="text-center z-1">
                             <i class="bi bi-rocket-takeoff-fill mb-4" style="font-size: 4rem;"></i>
                             <h3 class="fw-bold mb-3">开启健康之旅</h3>
-                            <p class="opacity-75">
-                                加入 Health Assistant<br>
-                                记录每一滴汗水<br>
-                                见证更好的自己
-                            </p>
+                            <p class="opacity-75">记录每一滴汗水<br>见证更好的自己</p>
                         </div>
                     </div>
 
                     <div class="col-md-7 bg-white p-5">
                         <h3 class="fw-bold text-center mb-4 text-dark">创建新账号 🚀</h3>
-
-                        <form method="POST">
+                        
+                        <form method="POST" action="{{ url_for('auth.register') }}">
                             <div class="mb-3">
                                 <label class="form-label small text-muted fw-bold">用户名</label>
                                 <div class="input-group">
@@ -124,7 +56,7 @@
                                     <input type="text" class="form-control" name="username" placeholder="设置一个登录账号" required>
                                 </div>
                             </div>
-
+                            
                             <div class="mb-3">
                                 <label class="form-label small text-muted fw-bold">密码</label>
                                 <div class="input-group">
@@ -132,7 +64,7 @@
                                     <input type="password" class="form-control" name="password" placeholder="设置安全密码" required>
                                 </div>
                             </div>
-
+                            
                             <div class="mb-4">
                                 <label class="form-label small text-muted fw-bold">昵称</label>
                                 <div class="input-group">
@@ -141,13 +73,11 @@
                                 </div>
                             </div>
 
-                            <button type="submit" class="btn btn-register w-100 mb-4">
-                                立即注册 <i class="bi bi-arrow-right-short"></i>
-                            </button>
+                            <button type="submit" class="btn btn-register w-100 mb-4">立即注册 <i class="bi bi-arrow-right-short"></i></button>
 
                             <div class="text-center">
                                 <span class="text-muted small">已经有账号了？</span>
-                                <a href="/login" class="login-link">直接登录</a>
+                                <a href="{{ url_for('auth.login') }}" class="login-link">直接登录</a>
                             </div>
                         </form>
                     </div>
@@ -156,6 +86,5 @@
         </div>
     </div>
 </div>
-
 </body>
 </html>
