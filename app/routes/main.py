@@ -21,12 +21,20 @@ def home():
         return redirect(url_for('main.dashboard'))
     return redirect(url_for('auth.login'))
 
+
 @bp.route('/dashboard')
 @login_required
 def dashboard():
     user_id = session['user_id']
-    # 1. 获取所有健康记录 (按时间正序排列)
-    records = HealthRecord.query.filter_by(user_id=user_id).order_by(HealthRecord.date.asc()).all()
+
+    # 1. 获取最近的健康记录 (优化点：只取最近14天，防止图表太挤)
+    # 先倒序取前14条，再反转回正序
+    recent_records = HealthRecord.query.filter_by(user_id=user_id) \
+        .order_by(HealthRecord.date.desc()) \
+        .limit(14) \
+        .all()
+    records = recent_records[::-1]
+
     # 2. 提取图表数据 (增加专业体征数据)
     dates = [r.date.strftime('%m-%d') for r in records]
     # 基础数据
@@ -37,24 +45,85 @@ def dashboard():
     heart_rates = [r.heart_rate if r.heart_rate else None for r in records]
     bp_highs = [r.blood_pressure_high if r.blood_pressure_high else None for r in records]
     bp_lows = [r.blood_pressure_low if r.blood_pressure_low else None for r in records]
+
     # 3. 获取最新的 AI 计划
     latest_plan = HealthPlan.query.filter_by(user_id=user_id).order_by(HealthPlan.created_at.desc()).first()
-    # 4. 计算今日活力值
+
+    # 4. 计算今日活力值 (升级版：三维健康评分)
     today_score = 0
-    if records and records[-1].steps:
-        # 简单算法：步数/100，上限100分
-        today_score = min(int(records[-1].steps / 100), 100)
-    return render_template('dashboard.html', 
+    if records:
+        last_rec = records[-1]  # 获取最新一条记录
+        user = User.query.get(user_id)  # 获取用户资料以计算 BMI
+
+        # --- 维度 A: 运动得分 (50%) ---
+        # 逻辑：目标 10000 步，按比例得分，最高 100
+        step_val = last_rec.steps or 0
+        score_move = min((step_val / 10000) * 100, 100)
+
+        # --- 维度 B: 睡眠得分 (30%) ---
+        # 逻辑：7-9小时满分(100)，6-7或9-10小时及格(80)，其他不及格(60)
+        sleep_val = last_rec.sleep_hours or 0
+        if 7 <= sleep_val <= 9:
+            score_sleep = 100
+        elif 6 <= sleep_val < 7 or 9 < sleep_val <= 10:
+            score_sleep = 80
+        else:
+            score_sleep = 60
+
+        # --- 维度 C: BMI 健康分 (20%) ---
+        # 逻辑：BMI 在 18.5~24 之间得满分。如果用户没填身高，给个平均分 80。
+        score_body = 80  # 默认分
+        if user.height and last_rec.weight:
+            # BMI = 体重(kg) / 身高(m)^2
+            height_m = user.height / 100
+            bmi = last_rec.weight / (height_m * height_m)
+
+            if 18.5 <= bmi <= 24:
+                score_body = 100
+            elif 24 < bmi <= 28 or 17 <= bmi < 18.5:
+                score_body = 80  # 微胖或偏瘦
+            else:
+                score_body = 60  # 肥胖或过瘦
+
+        # --- 综合加权计算 ---
+        today_score = int(score_move * 0.5 + score_sleep * 0.3 + score_body * 0.2)
+
+    # 5. 计算连续打卡天数 (Gamification)
+    streak_days = 0
+    if records:
+        # 取出所有日期并倒序（从最新开始查）
+        all_dates = [r.date for r in records]
+        all_dates.reverse()
+
+        # 检查最新一条是否是今天或昨天（否则算断签）
+        check_date = all_dates[0]
+        # 注意：这里需要 datetime 模块，文件头部已导入
+        if (datetime.now().date() - check_date).days <= 1:
+            streak_days = 1
+            previous_date = check_date
+
+            # 遍历剩下的日期
+            for d in all_dates[1:]:
+                if (previous_date - d).days == 1:  # 如果刚好差1天
+                    streak_days += 1
+                    previous_date = d
+                else:
+                    break  # 断签停止
+        else:
+            streak_days = 0
+
+    return render_template('dashboard.html',
                            nickname=session.get('nickname'),
                            dates=dates,
                            weights=weights,
                            steps=steps,
-                           sleep_hours=sleep_hours, # 传递新数据
+                           sleep_hours=sleep_hours,
                            heart_rates=heart_rates,
                            bp_highs=bp_highs,
                            bp_lows=bp_lows,
                            latest_plan=latest_plan,
-                           today_score=today_score)
+                           today_score=today_score,
+                           streak_days=streak_days)  # 传入新参数
 
 @bp.route('/record', methods=['GET', 'POST'])
 @login_required
@@ -85,35 +154,72 @@ def record():
     user_records = HealthRecord.query.filter_by(user_id=session['user_id']).order_by(HealthRecord.date.desc()).all()
     return render_template('record.html', nickname=session.get('nickname'), records=user_records)
 
+
 @bp.route('/plan', methods=['GET', 'POST'])
 @login_required
 def plan():
+    # 1. 获取当前登录用户
     user = User.query.get(session['user_id'])
 
     if request.method == 'POST':
+        # 2. 获取用户在网页上输入的目标 (例如："我想在一个月内减重 2kg")
         user_goal = request.form.get('goal')
+
+        # 3. 获取用户最近的一次身体数据 (为了告诉 AI 用户现在的状态)
         last_record = HealthRecord.query.filter_by(user_id=user.id).order_by(HealthRecord.date.desc()).first()
-        
-        # 数据预处理
-        current_weight = str(last_record.weight) if last_record else "未知"
-        age = datetime.now().year - user.birth_year if user.birth_year else "未知"
-        medical = user.medical_history if user.medical_history else "无"
-        
-        # 构造 Prompt
-        system_prompt = "你是一位专业的医学健康顾问。请根据用户数据和目标，生成Markdown格式的每日计划（包含饮食、运动、风险规避）。"
-        user_prompt = f"""
-        【用户档案】性别:{user.gender}, 年龄:{age}, 身高:{user.height}cm, 体重:{current_weight}kg, 病史:{medical}
-        【目标】{user_goal}
+
+        # --- 数据预处理 (防止数据为空导致报错) ---
+        current_weight = str(last_record.weight) if last_record and last_record.weight else "未知"
+        # 算出年龄
+        age = (datetime.now().year - user.birth_year) if user.birth_year else "未知"
+        # 获取病史 (非常重要，防止 AI 给出危险建议)
+        medical = user.medical_history if user.medical_history else "无明显病史"
+
+        # 4. 🔥 核心逻辑：构造“超强”提示词 (Prompt)
+        # 我们把用户的“档案”和“目标”拼接在一起发给 DeepSeek
+        system_prompt = """
+        你是一位经验丰富的三甲医院健康管理师和专业健身教练。
+        请根据用户的【个人档案】和【健康目标】，制定一份科学、可执行的【每日健康计划】。
+
+        计划必须包含以下模块：
+        1. 🥗 **饮食建议**：推荐早餐、午餐、晚餐的搭配原则（不需要具体食谱，要原则）。
+        2. 🏃 **运动方案**：具体的运动类型、时长和心率区间建议。
+        3. ⚠️ **风险规避**：结合用户的病史（如果有），指出需要避免的运动或食物。
+
+        请使用 Markdown 格式排版，语气亲切、专业、充满鼓励。
         """
 
-        # 调用 Service
+        user_prompt = f"""
+        【用户档案】
+        - 性别: {user.gender or '未知'}
+        - 年龄: {age} 岁
+        - 身高: {user.height or '未知'} cm
+        - 当前体重: {current_weight} kg
+        - 既往病史: {medical}
+
+        【用户的核心目标】
+        {user_goal}
+
+        (请根据以上信息，为我量身定制计划)
+        """
+
+        # 5. 调用 AI 服务 (这个函数在 services/ai_service.py 里)
+        # 注意：这里可能会因为网络延迟卡几秒，是正常的
         ai_content = call_deepseek_advisor(system_prompt, user_prompt)
 
-        new_plan = HealthPlan(user_id=user.id, goal=user_goal, content=ai_content)
+        # 6. 保存结果到数据库 (这样用户下次还能看到，不用重新生成)
+        new_plan = HealthPlan(
+            user_id=user.id,
+            goal=user_goal,
+            content=ai_content
+        )
         db.session.add(new_plan)
         db.session.commit()
+
+        # 刷新页面显示结果
         return redirect(url_for('main.plan'))
 
+    # GET 请求：查询最新的计划展示给用户
     latest_plan = HealthPlan.query.filter_by(user_id=user.id).order_by(HealthPlan.created_at.desc()).first()
     return render_template('plan.html', nickname=session.get('nickname'), latest_plan=latest_plan)
 

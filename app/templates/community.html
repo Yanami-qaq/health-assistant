@@ -2,167 +2,214 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>健康社区 - 大家一起聊</title>
+    <title>社区广场 - Health Assistant</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
-        .like-btn { cursor: pointer; transition: 0.2s; }
-        .like-btn:hover { transform: scale(1.1); }
-        .comment-box { background-color: #f8f9fa; border-radius: 8px; padding: 15px; margin-top: 15px; }
+        body { background-color: #f0f2f5; font-family: 'Nunito', sans-serif; }
+        .navbar { background-color: #fff; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
+
+        /* 卡片风格 */
+        .social-card {
+            border: none;
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            margin-bottom: 24px;
+        }
+
+        /* 发布框 */
+        .create-post-card {
+            background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+        }
+
+        /* 帖子列表 */
+        .post-header { display: flex; align-items: center; margin-bottom: 15px; }
+        .user-avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; margin-right: 12px; }
+
+        /* 点赞按钮 */
+        .action-btn {
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 20px;
+            transition: 0.2s;
+            color: #65676b;
+            text-decoration: none;
+        }
+        .action-btn:hover { background-color: #f0f2f5; }
+        .action-btn.liked { color: #e41e3f; }
+        .action-btn.liked i { font-weight: bold; }
+
+        /* 评论区 */
+        .comment-section { background-color: #fbfbfb; border-radius: 12px; padding: 15px; margin-top: 15px; }
+        .comment-item { font-size: 0.9rem; margin-bottom: 8px; }
+        .comment-user { font-weight: bold; margin-right: 5px; color: #333; }
+
+        /* 侧边栏（置顶） */
+        .sticky-sidebar { position: sticky; top: 90px; }
     </style>
 </head>
-<body class="bg-light">
+<body>
 
-<nav class="navbar navbar-dark bg-info mb-4">
+<nav class="navbar navbar-expand-lg sticky-top mb-4">
     <div class="container">
-        <span class="navbar-brand mb-0 h1">💬 健康社区</span>
-        <div>
-            <a href="/dashboard" class="text-white me-3 text-decoration-none">🏠 返回首页</a>
-            <span class="text-white">当前身份：{{ nickname }}</span>
-        </div>
+        <a class="navbar-brand fw-bold text-primary" href="/dashboard">
+            <i class="bi bi-chevron-left me-2"></i>返回仪表盘
+        </a>
+        <span class="navbar-text fw-bold text-dark">💬 交流广场</span>
     </div>
 </nav>
 
 <div class="container pb-5">
     <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card shadow sticky-top" style="top: 20px;">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">✏️ 发布新话题</h5>
+        <div class="col-md-4">
+            <div class="sticky-sidebar">
+                <div class="social-card p-4 text-center">
+                    <img src="https://ui-avatars.com/api/?name={{ current_user.nickname }}&background=0d6efd&color=fff&size=128" class="rounded-circle mb-3 shadow-sm" width="80">
+                    <h5 class="fw-bold mb-1">{{ current_user.nickname }}</h5>
+                    <p class="text-muted small mb-3">
+                        {% if current_user.is_admin %}
+                        <span class="badge bg-warning text-dark">👑 管理员</span>
+                        {% else %}
+                        <span class="badge bg-light text-secondary">普通会员</span>
+                        {% endif %}
+                    </p>
+                    <div class="d-grid">
+                        <a href="/settings" class="btn btn-outline-primary btn-sm rounded-pill">编辑资料</a>
+                    </div>
                 </div>
-                
-                <div class="card-body">
-                    {% if user.can_post or user.is_admin %}
-                        <form method="POST">
-                            <div class="mb-3">
-                                <label class="form-label">标题</label>
-                                <input type="text" class="form-control" name="title" placeholder="例如：我今天瘦了1斤！" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">内容</label>
-                                <textarea class="form-control" name="content" rows="5" placeholder="分享你的健康心得..." required></textarea>
-                            </div>
 
-                            {% if user.is_admin %}
-                            <div class="form-check mb-3 bg-light p-2 border rounded">
-                                <input class="form-check-input ms-1" type="checkbox" name="is_announcement" id="announcementCheck">
-                                <label class="form-check-label fw-bold text-danger ps-2" for="announcementCheck">
-                                    📢 发布为重要公告 (置顶显示)
-                                </label>
-                            </div>
-                            {% endif %}
+                <div class="social-card create-post-card p-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-pen-fill text-primary me-2"></i>分享你的健康心得</h6>
 
-                            <button type="submit" class="btn btn-primary w-100">🚀 立即发布</button>
-                        </form>
-                    {% else %}
-                        <div class="text-center py-4 text-muted">
-                            <h1 class="display-4 mb-3">🚫</h1>
-                            <h5>您已被管理员禁言</h5>
-                            <p class="small">无法发布新话题，请联系管理员解封。</p>
+                    {% if current_user.can_post or current_user.is_admin %}
+                    <form method="POST">
+                        <div class="mb-3">
+                            <input type="text" class="form-control border-0 bg-white shadow-sm mb-2 py-2" name="title" placeholder="标题：今天跑了5公里..." required style="border-radius: 10px;">
+                            <textarea class="form-control border-0 bg-white shadow-sm py-2" name="content" rows="3" placeholder="写点什么..." required style="border-radius: 10px; resize: none;"></textarea>
                         </div>
+
+                        {% if current_user.is_admin %}
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" name="is_announcement" id="announceCheck">
+                            <label class="form-check-label small fw-bold text-danger" for="announceCheck">设为全员公告</label>
+                        </div>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">发布 <i class="bi bi-send-fill ms-1"></i></button>
+                        </div>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-secondary text-center small m-0 rounded-3">
+                        <i class="bi bi-mic-mute-fill"></i> 您已被禁言
+                    </div>
                     {% endif %}
                 </div>
             </div>
         </div>
 
         <div class="col-md-8">
-            <h4 class="mb-3">🔥 最新动态</h4>
-            
+            <h5 class="mb-3 fw-bold text-secondary px-2">最新动态</h5>
+
             {% for post in posts %}
-            <div class="card shadow-sm mb-4 {% if post.is_announcement %}border-danger border-2{% endif %}">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="card-title text-primary mb-0 d-flex align-items-center">
-                            {% if post.is_announcement %}
-                                <span class="badge bg-danger me-2"><i class="bi bi-megaphone-fill"></i> 公告</span>
-                            {% endif %}
-                            {{ post.title }}
-                        </h5>
-                        
-                        <div class="d-flex align-items-center">
-                            <small class="text-muted me-2">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                            
-                            {% if session['is_admin'] %}
-                            <a href="/admin/delete_post/{{ post.id }}" class="btn btn-sm btn-outline-danger border-0 py-0" onclick="return confirm('⚠️ 确定要强制删除这条帖子吗？')">
-                                <i class="bi bi-trash-fill"></i> 删除
-                            </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <p class="card-text fs-5">{{ post.content }}</p>
-                    
-                    <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-3">
-                        <div class="text-muted small">
-                            👤 作者：<span class="fw-bold">{{ post.user.nickname }}</span>
-                            {% if post.user.is_admin %}
-                                <span class="badge bg-warning text-dark ms-1" style="font-size: 0.7em">管理员</span>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="d-flex align-items-center">
-                            <span class="me-3 like-btn text-danger" onclick="toggleLike({{ post.id }})">
-                                {% if post.is_liked_by(session['user_id']) %}
-                                    <i id="icon-{{ post.id }}" class="bi bi-heart-fill fs-5"></i>
-                                {% else %}
-                                    <i id="icon-{{ post.id }}" class="bi bi-heart fs-5"></i>
+            <div class="social-card p-4 {% if post.is_announcement %}border border-danger border-opacity-25{% endif %}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="post-header m-0">
+                        <img src="https://ui-avatars.com/api/?name={{ post.user.nickname }}&background=random&color=fff" class="user-avatar">
+                        <div>
+                            <div class="fw-bold text-dark d-flex align-items-center">
+                                {{ post.user.nickname }}
+                                {% if post.is_announcement %}
+                                <span class="badge bg-danger ms-2" style="font-size: 0.6rem;">公告</span>
                                 {% endif %}
-                                <span id="count-{{ post.id }}" class="ms-1 fw-bold">{{ post.likes.count() }}</span>
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="comment-box">
-                        <div class="mb-3">
-                            {% for comment in post.comments %}
-                            <div class="border-bottom pb-2 mb-2">
-                                <span class="fw-bold text-dark small">{{ comment.user.nickname }}:</span>
-                                <span class="text-secondary small">{{ comment.content }}</span>
                             </div>
-                            {% else %}
-                            <p class="text-muted small mb-1">暂无评论，快来抢沙发~</p>
-                            {% endfor %}
+                            <div class="small text-muted" style="font-size: 0.8rem;">{{ post.created_at.strftime('%m-%d %H:%M') }}</div>
                         </div>
-
-                        <form action="/post/{{ post.id }}/comment" method="POST" class="d-flex">
-                            <input type="text" name="content" class="form-control form-control-sm me-2" placeholder="写下你的评论..." required>
-                            <button type="submit" class="btn btn-sm btn-outline-primary">发送</button>
-                        </form>
                     </div>
 
+                    {% if session['is_admin'] %}
+                    <a href="/admin/delete_post/{{ post.id }}" onclick="return confirm('确定删除？')" class="text-secondary opacity-50 hover-danger">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3 mt-2">
+                    <h5 class="fw-bold text-dark">{{ post.title }}</h5>
+                    <p class="text-secondary" style="white-space: pre-wrap; line-height: 1.6;">{{ post.content }}</p>
+                </div>
+
+                <div class="d-flex align-items-center border-top pt-2">
+                    <div class="action-btn me-4 {% if post.is_liked_by(session['user_id']) %}liked{% endif %}" onclick="toggleLike({{ post.id }}, this)">
+                        <i class="bi {% if post.is_liked_by(session['user_id']) %}bi-heart-fill{% else %}bi-heart{% endif %} me-1"></i>
+                        <span class="like-count fw-bold">{{ post.likes.count() }}</span>
+                    </div>
+                    <div class="action-btn" onclick="document.getElementById('comment-input-{{ post.id }}').focus()">
+                        <i class="bi bi-chat-dots me-1"></i> 评论
+                    </div>
+                </div>
+
+                <div class="comment-section">
+                    {% if post.comments %}
+                        <div class="mb-3">
+                        {% for comment in post.comments %}
+                            <div class="comment-item">
+                                <span class="comment-user">{{ comment.user.nickname }}:</span>
+                                <span class="text-dark opacity-75">{{ comment.content }}</span>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <form action="/post/{{ post.id }}/comment" method="POST" class="d-flex">
+                        <input type="text" id="comment-input-{{ post.id }}" name="content" class="form-control form-control-sm border-0 shadow-none bg-white rounded-pill me-2 px-3" placeholder="写下你的评论..." required>
+                        <button type="submit" class="btn btn-sm btn-link text-decoration-none fw-bold p-0">发送</button>
+                    </form>
                 </div>
             </div>
             {% else %}
-            <div class="alert alert-warning text-center">
-                还没有人发帖，快来抢沙发！🛋️
+            <div class="text-center py-5">
+                <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" width="100" class="opacity-25 mb-3">
+                <p class="text-muted">还没有帖子，来做第一个发言的人吧！</p>
             </div>
             {% endfor %}
-            
         </div>
     </div>
 </div>
 
 <script>
-function toggleLike(postId) {
+function toggleLike(postId, btnElement) {
+    // 立即给用户反馈（防抖动）
+    const icon = btnElement.querySelector('i');
+    const countSpan = btnElement.querySelector('.like-count');
+    let currentCount = parseInt(countSpan.innerText);
+
+    // 乐观UI更新：假设请求成功，先变色
+    const isLiked = btnElement.classList.contains('liked');
+    if (isLiked) {
+        btnElement.classList.remove('liked');
+        icon.classList.remove('bi-heart-fill');
+        icon.classList.add('bi-heart');
+        countSpan.innerText = currentCount - 1;
+    } else {
+        btnElement.classList.add('liked');
+        icon.classList.remove('bi-heart');
+        icon.classList.add('bi-heart-fill');
+        countSpan.innerText = currentCount + 1;
+    }
+
+    // 发送后台请求
     fetch(`/post/${postId}/like`, { method: 'POST' })
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                const icon = document.getElementById(`icon-${postId}`);
-                const count = document.getElementById(`count-${postId}`);
-                count.innerText = data.count;
-                if (data.liked) {
-                    icon.classList.remove('bi-heart');
-                    icon.classList.add('bi-heart-fill');
-                } else {
-                    icon.classList.remove('bi-heart-fill');
-                    icon.classList.add('bi-heart');
-                }
+                // 以后台真实数据为准校正
+                countSpan.innerText = data.count;
             }
         })
         .catch(error => console.error('Error:', error));
 }
 </script>
-
 </body>
 </html>

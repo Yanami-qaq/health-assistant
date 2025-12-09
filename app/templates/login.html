@@ -2,48 +2,151 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>用户登录 - 健康助手</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>登录 - Health Assistant</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
-        .login-switch { cursor: pointer; }
+        body {
+            /* 活力渐变背景 */
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        .login-card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden; /* 防止图片溢出圆角 */
+        }
+        .login-sidebar {
+            background: linear-gradient(45deg, #11998e, #38ef7d);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            padding: 40px;
+        }
+        .form-control {
+            border-radius: 10px;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border: 1px solid #eee;
+        }
+        .form-control:focus {
+            box-shadow: none;
+            border-color: #38ef7d;
+            background-color: #fff;
+        }
+        .btn-login {
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-user {
+            background-color: #11998e;
+            border: none;
+            color: white;
+        }
+        .btn-user:hover {
+            background-color: #0c7a70;
+            transform: translateY(-2px);
+        }
+        .btn-admin {
+            background-color: #343a40;
+            border: none;
+            color: white;
+        }
+        .btn-admin:hover {
+            background-color: #23272b;
+            transform: translateY(-2px);
+        }
+        .role-switch {
+            cursor: pointer;
+            opacity: 0.6;
+            transition: 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .role-switch.active {
+            opacity: 1;
+            font-weight: bold;
+            color: #11998e;
+            border-bottom: 2px solid #11998e;
+        }
+        .role-switch.active-admin {
+            color: #343a40;
+            border-bottom: 2px solid #343a40;
+        }
     </style>
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container mt-5">
+<div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-5">
-            <div class="card shadow">
-                <div class="card-header bg-white p-0">
-                    <div class="d-flex text-center">
-                        <div class="flex-fill p-3 fw-bold bg-success text-white login-switch" id="tab-user" onclick="switchLogin('user')">
-                            普通用户登录
-                        </div>
-                        <div class="flex-fill p-3 fw-bold bg-light text-muted login-switch" id="tab-admin" onclick="switchLogin('admin')">
-                            管理员登录
-                        </div>
+        <div class="col-md-10 col-lg-9">
+            <div class="card login-card">
+                <div class="row g-0">
+                    <div class="col-md-5 d-none d-md-flex login-sidebar">
+                        <i class="bi bi-activity" style="font-size: 4rem; margin-bottom: 20px;"></i>
+                        <h3 class="fw-bold">Health Assistant</h3>
+                        <p class="text-center opacity-75 mt-2">您的 24 小时 AI 健康管家<br>数据追踪 · 智能建议 · 社区互助</p>
                     </div>
-                </div>
 
-                <div class="card-body pt-4">
-                    <form method="POST">
-                        <input type="hidden" name="login_type" id="login_type" value="user">
-
-                        <div class="mb-3">
-                            <label class="form-label">账号</label>
-                            <input type="text" class="form-control" name="username" placeholder="请输入用户名" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">密码</label>
-                            <input type="password" class="form-control" name="password" required>
+                    <div class="col-md-7 bg-white p-5">
+                        <div class="d-flex justify-content-center mb-4 gap-4">
+                            <div class="role-switch active pb-2" id="tab-user" onclick="switchLogin('user')">
+                                <i class="bi bi-person-fill"></i> 普通用户
+                            </div>
+                            <div class="role-switch pb-2" id="tab-admin" onclick="switchLogin('admin')">
+                                <i class="bi bi-shield-lock-fill"></i> 管理员
+                            </div>
                         </div>
 
-                        <button type="submit" class="btn btn-success w-100" id="btn-submit">立即登录</button>
-                    </form>
+                        <h4 class="fw-bold text-center mb-4" id="welcome-text">欢迎回来 👋</h4>
 
-                    <div class="mt-3 text-center">
-                        <a href="/register">还没有账号？去注册</a>
+                        {% with messages = get_flashed_messages() %}
+                          {% if messages %}
+                            {% for message in messages %}
+                              <div class="alert alert-danger py-2 small rounded-3 border-0 bg-danger bg-opacity-10 text-danger">
+                                <i class="bi bi-exclamation-circle-fill me-1"></i> {{ message }}
+                              </div>
+                            {% endfor %}
+                          {% endif %}
+                        {% endwith %}
+
+                        <form method="POST">
+                            <input type="hidden" name="login_type" id="login_type" value="user">
+
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">账号</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-0"><i class="bi bi-person"></i></span>
+                                    <input type="text" class="form-control" name="username" placeholder="请输入用户名" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label small text-muted">密码</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-0"><i class="bi bi-key"></i></span>
+                                    <input type="password" class="form-control" name="password" placeholder="••••••••" required>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-login btn-user w-100 mb-3" id="btn-submit">
+                                立即登录
+                            </button>
+
+                            <div class="text-center">
+                                <span class="text-muted small">还没有账号？</span>
+                                <a href="/register" class="text-decoration-none fw-bold" style="color: #11998e;">去注册一个</a>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -53,30 +156,31 @@
 
 <script>
     function switchLogin(type) {
-        // 1. 修改隐藏字段的值 (user 或 admin)
         document.getElementById('login_type').value = type;
 
-        // 2. 获取两个标签元素
-        var userTab = document.getElementById('tab-user');
-        var adminTab = document.getElementById('tab-admin');
-        var submitBtn = document.getElementById('btn-submit');
+        const userTab = document.getElementById('tab-user');
+        const adminTab = document.getElementById('tab-admin');
+        const btn = document.getElementById('btn-submit');
+        const title = document.getElementById('welcome-text');
 
-        // 3. 改变样式（谁被选中，谁就变色）
         if (type === 'admin') {
-            // 选中了管理员
-            userTab.className = 'flex-fill p-3 fw-bold bg-light text-muted login-switch';
-            adminTab.className = 'flex-fill p-3 fw-bold bg-dark text-white login-switch'; // 管理员用黑色
-            submitBtn.className = 'btn btn-dark w-100'; // 按钮也变黑
-            submitBtn.innerText = '管理员登录';
+            userTab.classList.remove('active');
+            adminTab.classList.add('active', 'active-admin');
+
+            btn.classList.remove('btn-user');
+            btn.classList.add('btn-admin');
+            btn.innerHTML = '管理员登录 <i class="bi bi-arrow-right-short"></i>';
+            title.innerText = '后台管理系统';
         } else {
-            // 选中了普通用户
-            userTab.className = 'flex-fill p-3 fw-bold bg-success text-white login-switch'; // 用户用绿色
-            adminTab.className = 'flex-fill p-3 fw-bold bg-light text-muted login-switch';
-            submitBtn.className = 'btn btn-success w-100'; // 按钮变绿
-            submitBtn.innerText = '立即登录';
+            adminTab.classList.remove('active', 'active-admin');
+            userTab.classList.add('active');
+
+            btn.classList.remove('btn-admin');
+            btn.classList.add('btn-user');
+            btn.innerHTML = '立即登录';
+            title.innerText = '欢迎回来 👋';
         }
     }
 </script>
-
 </body>
 </html>

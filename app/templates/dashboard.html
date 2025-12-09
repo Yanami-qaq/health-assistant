@@ -2,65 +2,149 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>我的健康仪表盘</title>
+    <title>健康仪表盘 - Health Assistant</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .ai-card { background-color: #f8f9fa; border-left: 5px solid #0d6efd; }
-        .score-circle {
-            width: 100px; height: 100px; border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; display: flex; align-items: center; justify-content: center;
-            font-size: 2rem; font-weight: bold; margin: 0 auto;
+        body { background-color: #f0f2f5; font-family: 'Nunito', sans-serif; }
+
+        /* 导航栏 */
+        .navbar {
+            background-color: #fff;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
         }
-        .chart-container { position: relative; height: 250px; }
+
+        /* 活力值卡片 */
+        .vitality-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        .vitality-score {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        /* 通用卡片样式 */
+        .custom-card {
+            border: none;
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 100%;
+        }
+        .custom-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        }
+
+        /* 快捷入口图标 */
+        .icon-box {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        /* AI 卡片 */
+        .ai-card {
+            background: #fff;
+            border-left: 5px solid #0d6efd;
+        }
     </style>
 </head>
-<body class="bg-light">
+<body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4 shadow-sm">
+<nav class="navbar navbar-expand-lg sticky-top mb-4">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="#">Health Assistant 2.0</a>
+        <a class="navbar-brand fw-bold text-primary" href="#">
+            <i class="bi bi-activity"></i> Health Assistant
+        </a>
         <div class="d-flex align-items-center">
-            <span class="text-white me-3">Hi, {{ nickname }}</span>
-            <a href="/settings" class="btn btn-sm btn-outline-light me-2">⚙️ 设置</a>
-            <a href="/logout" class="btn btn-sm btn-danger">退出</a>
+            <div class="me-3 text-end d-none d-sm-block">
+                <div class="fw-bold text-dark">{{ nickname }}</div>
+                <div class="small text-muted">
+                    {% if streak_days > 0 %}🔥 连签 {{ streak_days }} 天{% else %}记得打卡哦{% endif %}
+                </div>
+            </div>
+            <img src="https://ui-avatars.com/api/?name={{ nickname }}&background=0d6efd&color=fff" class="rounded-circle me-3" width="40">
+
+            <div class="dropdown">
+                <a href="#" class="btn btn-light rounded-circle" data-bs-toggle="dropdown">
+                    <i class="bi bi-gear"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4">
+                    <li><a class="dropdown-item py-2" href="/settings"><i class="bi bi-person-gear me-2"></i> 个人设置</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item py-2 text-danger" href="/logout"><i class="bi bi-box-arrow-right me-2"></i> 退出登录</a></li>
+                </ul>
+            </div>
         </div>
     </div>
 </nav>
 
 <div class="container pb-5">
-    
-    <div class="row mb-4">
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm h-100 border-0">
-                <div class="card-body text-center">
-                    <h6 class="text-muted mb-3">今日健康活力值</h6>
-                    <div class="score-circle shadow">{{ today_score }}</div>
-                    <p class="mt-3 small text-muted">
-                        {% if today_score > 80 %} 状态爆棚！继续保持！🔥
-                        {% elif today_score > 60 %} 表现不错，再接再厉！👍
-                        {% else %} 该动起来了哦！🚶‍♂️ {% endif %}
-                    </p>
+
+    <div class="row mb-4 g-3">
+        <div class="col-lg-4">
+            <div class="card vitality-card h-100 p-4">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="opacity-75 mb-1">今日活力值</h5>
+                        <div class="vitality-score mb-2">{{ today_score }}</div>
+                        <div class="badge bg-white bg-opacity-20 rounded-pill px-3 py-2 fw-normal">
+                            {% if today_score > 80 %}状态爆棚 🔥{% elif today_score > 60 %}继续加油 👍{% else %}该动动了 🚶{% endif %}
+                        </div>
+                    </div>
+                    <i class="bi bi-heart-pulse-fill" style="font-size: 4rem; opacity: 0.2;"></i>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-8">
-            <div class="row h-100">
-                <div class="col-6 mb-3">
-                    <a href="/record" class="card shadow-sm h-100 text-decoration-none border-0 hover-effect">
-                        <div class="card-body d-flex flex-column align-items-center justify-content-center text-success">
-                            <h2 class="mb-2">📝</h2>
-                            <h5>去记录数据</h5>
+        <div class="col-lg-8">
+            <div class="row h-100 g-3">
+                <div class="col-6 col-md-4">
+                    <a href="/record" class="text-decoration-none">
+                        <div class="card custom-card p-4 text-center d-flex flex-column align-items-center justify-content-center">
+                            <div class="icon-box bg-success bg-opacity-10 text-success">
+                                <i class="bi bi-pencil-square"></i>
+                            </div>
+                            <h6 class="text-dark fw-bold m-0">记录数据</h6>
+                            <small class="text-muted mt-1">打卡每一天</small>
                         </div>
                     </a>
                 </div>
-                <div class="col-6 mb-3">
-                    <a href="/community" class="card shadow-sm h-100 text-decoration-none border-0">
-                        <div class="card-body d-flex flex-column align-items-center justify-content-center text-info">
-                            <h2 class="mb-2">💬</h2>
-                            <h5>社区广场</h5>
+                <div class="col-6 col-md-4">
+                    <a href="/plan" class="text-decoration-none">
+                        <div class="card custom-card p-4 text-center d-flex flex-column align-items-center justify-content-center">
+                            <div class="icon-box bg-warning bg-opacity-10 text-warning">
+                                <i class="bi bi-robot"></i>
+                            </div>
+                            <h6 class="text-dark fw-bold m-0">AI 顾问</h6>
+                            <small class="text-muted mt-1">智能生成计划</small>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-12 col-md-4">
+                    <a href="/community" class="text-decoration-none">
+                        <div class="card custom-card p-4 d-flex flex-row flex-md-column align-items-center justify-content-center gap-3">
+                            <div class="icon-box bg-info bg-opacity-10 text-info m-0">
+                                <i class="bi bi-chat-heart"></i>
+                            </div>
+                            <div class="text-center text-md-center text-start">
+                                <h6 class="text-dark fw-bold m-0">社区广场</h6>
+                                <small class="text-muted mt-1 d-block">和大家一起聊聊</small>
+                            </div>
                         </div>
                     </a>
                 </div>
@@ -68,69 +152,68 @@
         </div>
     </div>
 
-    <div class="row">
+    <div class="row g-4">
         <div class="col-lg-8">
-            
-            <div class="card shadow border-0 mb-4">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">📈 运动与体重趋势</h5>
+            <div class="card custom-card mb-4 p-3">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">📈 趋势分析</h5>
+                    <span class="badge bg-light text-secondary">最近 14 天</span>
                 </div>
                 <div class="card-body">
-                    <div class="chart-container" style="height: 300px;">
+                    <div style="height: 300px;">
                         <canvas id="mainChart"></canvas>
                     </div>
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-md-6 mb-4">
-                    <div class="card shadow border-0 h-100">
-                        <div class="card-header bg-white">
-                            <h6 class="mb-0">😴 睡眠质量 (小时)</h6>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card custom-card p-3">
+                        <div class="card-header bg-white border-0">
+                            <h6 class="fw-bold mb-0 text-secondary">😴 睡眠时长 (h)</h6>
                         </div>
                         <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="sleepChart"></canvas>
-                            </div>
+                            <div style="height: 200px;"><canvas id="sleepChart"></canvas></div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 mb-4">
-                    <div class="card shadow border-0 h-100">
-                        <div class="card-header bg-white">
-                            <h6 class="mb-0">❤️ 心血管健康 (BP/HR)</h6>
+                <div class="col-md-6">
+                    <div class="card custom-card p-3">
+                        <div class="card-header bg-white border-0">
+                            <h6 class="fw-bold mb-0 text-secondary">❤️ 心率与血压</h6>
                         </div>
                         <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="cardioChart"></canvas>
-                            </div>
+                            <div style="height: 200px;"><canvas id="cardioChart"></canvas></div>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
 
-        <div class="col-lg-4 mb-4">
-            <div class="card shadow border-0 ai-card h-100">
-                <div class="card-header bg-transparent border-0 pt-4 pb-0">
-                    <h5 class="text-primary">🤖 AI 顾问建议</h5>
+        <div class="col-lg-4">
+            <div class="card custom-card border-0 h-100">
+                <div class="card-header bg-white border-0 pt-4 pb-0">
+                    <h5 class="fw-bold text-primary"><i class="bi bi-stars"></i> 本周目标</h5>
                 </div>
                 <div class="card-body">
                     {% if latest_plan %}
-                        <p class="fw-bold text-dark">当前目标：{{ latest_plan.goal }}</p>
-                        <hr>
-                        <div style="white-space: pre-wrap; font-size: 0.95rem; color: #555;">
-                            {{ latest_plan.content }}
+                        <div class="alert alert-light border border-primary border-opacity-25 rounded-3 mb-3">
+                            <small class="text-muted d-block mb-1">🎯 你的目标</small>
+                            <span class="fw-bold text-dark">{{ latest_plan.goal }}</span>
                         </div>
-                        <div class="mt-3 text-end">
-                            <small class="text-muted">生成于: {{ latest_plan.created_at.strftime('%Y-%m-%d') }}</small>
-                            <a href="/plan" class="btn btn-sm btn-outline-primary mt-2 d-block">更新计划</a>
+
+                        <div class="p-3 bg-light rounded-4 mb-3" style="max-height: 400px; overflow-y: auto;">
+                            <div class="small text-secondary" style="white-space: pre-wrap;">{{ latest_plan.content[:200] }}...</div>
                         </div>
+
+                        <a href="/plan" class="btn btn-outline-primary w-100 rounded-pill">
+                            查看完整计划
+                        </a>
                     {% else %}
                         <div class="text-center py-5">
-                            <p class="text-muted">还没有生成过计划哦</p>
-                            <a href="/plan" class="btn btn-primary">立即生成一份 ✨</a>
+                            <i class="bi bi-clipboard-data text-muted" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-3">还没有生成过计划</p>
+                            <a href="/plan" class="btn btn-primary rounded-pill px-4">立即生成</a>
                         </div>
                     {% endif %}
                 </div>
@@ -139,8 +222,10 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
-    // 1. 接收后端数据
+    // 图表数据逻辑 (和之前一样，只是样式微调)
     const dates = {{ dates | tojson }};
     const weights = {{ weights | tojson }};
     const steps = {{ steps | tojson }};
@@ -149,7 +234,10 @@
     const bpHighs = {{ bp_highs | tojson }};
     const bpLows = {{ bp_lows | tojson }};
 
-    // 2. 主图表：体重与步数
+    // 配置通用样式：让图表变圆滑
+    Chart.defaults.font.family = "'Nunito', sans-serif";
+    Chart.defaults.color = '#6c757d';
+
     new Chart(document.getElementById('mainChart'), {
         type: 'line',
         data: {
@@ -158,86 +246,69 @@
                 {
                     label: '体重 (kg)',
                     data: weights,
-                    borderColor: '#ff6384',
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: '#ff6b6b',
+                    backgroundColor: 'rgba(255, 107, 107, 0.1)',
                     yAxisID: 'y',
-                    tension: 0.3
+                    tension: 0.4, // 曲线圆滑度
+                    fill: true
                 },
                 {
                     label: '步数',
                     data: steps,
-                    borderColor: '#36a2eb',
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: '#4dabf7',
+                    backgroundColor: 'rgba(77, 171, 247, 0.1)',
                     yAxisID: 'y1',
-                    tension: 0.3
+                    tension: 0.4,
+                    fill: true
                 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
             scales: {
-                y: { type: 'linear', display: true, position: 'left', title: {display: true, text: 'kg'} },
-                y1: { type: 'linear', display: true, position: 'right', grid: {drawOnChartArea: false}, title: {display: true, text: '步'} }
-            }
+                y: { display: true, position: 'left', grid: { borderDash: [5, 5] } },
+                y1: { display: true, position: 'right', grid: { display: false } }
+            },
+            plugins: { legend: { labels: { usePointStyle: true, boxWidth: 6 } } }
         }
     });
 
-    // 3. 睡眠图表 (柱状图)
     new Chart(document.getElementById('sleepChart'), {
         type: 'bar',
         data: {
             labels: dates,
             datasets: [{
-                label: '睡眠时长 (h)',
+                label: '时长',
                 data: sleepHours,
-                backgroundColor: 'rgba(153, 102, 255, 0.6)',
-                borderColor: 'rgba(153, 102, 255, 1)',
-                borderWidth: 1
+                backgroundColor: '#a29bfe',
+                borderRadius: 4
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: false, min: 4 } // 睡眠一般不会少于4小时，设置min让波动更明显
-            }
+            plugins: { legend: { display: false } },
+            scales: { y: { grid: { display: false } }, x: { grid: { display: false } } }
         }
     });
 
-    // 4. 心血管健康图表 (三条折线)
     new Chart(document.getElementById('cardioChart'), {
         type: 'line',
         data: {
             labels: dates,
             datasets: [
-                {
-                    label: '高压',
-                    data: bpHighs,
-                    borderColor: '#ff9f40',
-                    tension: 0.3,
-                    pointRadius: 2
-                },
-                {
-                    label: '低压',
-                    data: bpLows,
-                    borderColor: '#ffcd56',
-                    tension: 0.3,
-                    pointRadius: 2
-                },
-                {
-                    label: '心率',
-                    data: heartRates,
-                    borderColor: '#4bc0c0',
-                    borderDash: [5, 5], // 虚线表示心率，区分血压
-                    tension: 0.3,
-                    pointRadius: 2
-                }
+                { label: '高压', data: bpHighs, borderColor: '#fdcb6e', tension: 0.4, pointRadius: 0 },
+                { label: '低压', data: bpLows, borderColor: '#ffeaa7', tension: 0.4, pointRadius: 0 },
+                { label: '心率', data: heartRates, borderColor: '#00b894', borderDash: [5,5], tension: 0.4, pointRadius: 0 }
             ]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { boxWidth: 10 } } },
+            elements: { point: { hoverRadius: 5 } }
         }
     });
 </script>

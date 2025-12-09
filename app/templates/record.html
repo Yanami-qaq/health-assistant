@@ -2,198 +2,252 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>每日健康打卡 - 健康助手 2.0</title>
+    <title>记录数据 - Health Assistant</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Nunito', sans-serif; }
+
+        /* 顶部导航统一风格 */
+        .navbar { background-color: #fff; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
+
+        /* 卡片风格 */
+        .record-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            background: #fff;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .card-header-custom {
+            background: #fff;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 20px 25px;
+        }
+
+        /* 表单控件优化 */
+        .form-label { font-weight: 600; color: #495057; font-size: 0.9rem; margin-bottom: 8px; }
+        .input-group-text { background-color: #f8f9fa; border: 1px solid #dee2e6; color: #6c757d; }
+        .form-control:focus { box-shadow: none; border-color: #11998e; }
+
+        /* 历史记录列表 */
+        .history-item {
+            border-left: 4px solid transparent;
+            transition: all 0.2s;
+        }
+        .history-item:hover {
+            background-color: #f8f9fa;
+            border-left-color: #11998e;
+            transform: translateX(5px);
+        }
+        .badge-date { background-color: #e3f2fd; color: #0d6efd; font-weight: bold; }
+
+        /* 按钮 */
+        .btn-sync {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            border: none;
+            color: white;
+            font-weight: bold;
+        }
+        .btn-sync:hover { background: linear-gradient(45deg, #00f2fe, #4facfe); color: white; }
+
+        .btn-save {
+            background: linear-gradient(45deg, #11998e, #38ef7d);
+            border: none;
+            padding: 12px;
+            font-size: 1.1rem;
+            border-radius: 10px;
+        }
+        .btn-save:hover { background: linear-gradient(45deg, #38ef7d, #11998e); }
+    </style>
 </head>
-<body class="bg-light">
+<body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-success mb-4 shadow-sm">
+<nav class="navbar navbar-expand-lg sticky-top mb-4">
     <div class="container">
-        <span class="navbar-brand mb-0 h1 fw-bold">Health Assistant 2.0</span>
-        
-        <div class="d-flex align-items-center">
-            <a href="/dashboard" class="btn btn-outline-light btn-sm me-2">🏠 返回首页</a>
-            <a href="/plan" class="btn btn-warning btn-sm me-2 text-dark fw-bold">✨ AI 顾问</a>
-            <a href="/community" class="btn btn-info btn-sm me-3 text-white fw-bold">💬 社区</a>
-
-            <span class="text-white me-2">你好，{{ nickname }}</span>
-            <a href="/settings" class="btn btn-sm btn-outline-light me-2" title="个人设置">⚙️</a>
-            <a href="/logout" class="btn btn-sm btn-danger">退出</a>
-        </div>
+        <a class="navbar-brand fw-bold text-primary" href="/dashboard">
+            <i class="bi bi-chevron-left me-2"></i>返回仪表盘
+        </a>
+        <span class="navbar-text fw-bold text-dark">📝 每日打卡</span>
     </div>
 </nav>
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-9">
-            
-            <div class="card shadow mb-5">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-success">📝 记录今日数据</h5>
-                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="syncDeviceData()">
-                        <i class="bi bi-watch"></i> 模拟从健康App导入
+<div class="container pb-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="record-card">
+                <div class="card-header-custom d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold text-dark"><i class="bi bi-pencil-square text-primary me-2"></i>录入今日数据</h5>
+                    <button type="button" class="btn btn-sm btn-sync rounded-pill px-3 py-2 shadow-sm" onclick="syncDeviceData()">
+                        <i class="bi bi-smartwatch me-1"></i> 一键同步设备
                     </button>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     <form method="POST">
-                        
-                        <div class="row mb-3">
+                        <h6 class="text-muted small fw-bold mb-3 text-uppercase ls-1">🏃 运动与基础</h6>
+                        <div class="row g-3 mb-4">
                             <div class="col-md-4">
-                                <label class="form-label fw-bold">日期</label>
+                                <label class="form-label">日期</label>
                                 <input type="date" class="form-control" id="date" name="date" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-bold">体重 (kg)</label>
-                                <input type="number" step="0.1" class="form-control" id="weight" name="weight" placeholder="0.0" required>
+                                <label class="form-label">体重 (kg)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-speedometer2"></i></span>
+                                    <input type="number" step="0.1" class="form-control" id="weight" name="weight" placeholder="0.0">
+                                </div>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-bold">步数</label>
-                                <input type="number" class="form-control" id="steps" name="steps" placeholder="0" required>
+                                <label class="form-label">步数</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-footprint"></i></span>
+                                    <input type="number" class="form-control" id="steps" name="steps" placeholder="0">
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
+                        <h6 class="text-muted small fw-bold mb-3 text-uppercase ls-1 border-top pt-3">🌙 睡眠 & 消耗</h6>
+                        <div class="row g-3 mb-4">
                             <div class="col-md-4">
-                                <label class="form-label fw-bold">睡眠时长 (h)</label>
-                                <input type="number" step="0.1" class="form-control" id="sleep_hours" name="sleep_hours" placeholder="例如: 7.5" required>
+                                <label class="form-label">睡眠 (小时)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-moon-stars"></i></span>
+                                    <input type="number" step="0.1" class="form-control" id="sleep_hours" name="sleep_hours">
+                                </div>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-bold">静息心率 (bpm)</label>
-                                <input type="number" class="form-control" id="heart_rate" name="heart_rate" placeholder="例如: 72" required>
+                                <label class="form-label">静息心率 (bpm)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-heart-pulse"></i></span>
+                                    <input type="number" class="form-control" id="heart_rate" name="heart_rate">
+                                </div>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-bold">消耗卡路里</label>
-                                <input type="number" class="form-control" id="calories" name="calories" placeholder="0" required>
+                                <label class="form-label">卡路里</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-fire"></i></span>
+                                    <input type="number" class="form-control" id="calories" name="calories">
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">收缩压 (高压 mmHg)</label>
-                                <input type="number" class="form-control" id="blood_pressure_high" name="bp_high" placeholder="120" required>
+                        <h6 class="text-muted small fw-bold mb-3 text-uppercase ls-1 border-top pt-3">🩺 血压 & 备注</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-6">
+                                <label class="form-label">高压 (mmHg)</label>
+                                <input type="number" class="form-control" id="blood_pressure_high" name="bp_high">
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">舒张压 (低压 mmHg)</label>
-                                <input type="number" class="form-control" id="blood_pressure_low" name="bp_low" placeholder="80" required>
+                            <div class="col-6">
+                                <label class="form-label">低压 (mmHg)</label>
+                                <input type="number" class="form-control" id="blood_pressure_low" name="bp_low">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">📝 身体感觉 / 备注</label>
+                                <textarea class="form-control" id="note" name="note" rows="2" placeholder="今天感觉如何？有无不适？"></textarea>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">身体感觉 / 备注</label>
-                            <input type="text" class="form-control" id="note" name="note" placeholder="例如：今天状态不错，感觉精力充沛...">
-                        </div>
-
-                        <button type="submit" class="btn btn-success w-100 fw-bold py-2">💾 保存全部数据</button>
+                        <button type="submit" class="btn btn-save btn-primary w-100 shadow text-white fw-bold">
+                            <i class="bi bi-check-lg me-2"></i>保存所有数据
+                        </button>
                     </form>
                 </div>
             </div>
-            
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">📊 历史记录档案</h5>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="record-card h-100">
+                <div class="card-header-custom">
+                    <h6 class="m-0 fw-bold text-secondary">📂 历史归档</h6>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-striped mb-0 text-center align-middle">
-                            <thead class="table-success text-nowrap">
-                                <tr>
-                                    <th>日期</th>
-                                    <th>体重</th>
-                                    <th>步数</th>
-                                    <th>睡眠</th>
-                                    <th>心率/血压</th>
-                                    <th>备注</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for record in records %}
-                                <tr>
-                                    <td class="fw-bold">{{ record.date }}</td>
-                                    <td>{{ record.weight }}</td>
-                                    <td>{{ record.steps }}</td>
-                                    <td>{{ record.sleep_hours or '-' }}h</td>
-                                    <td>
-                                        {% if record.heart_rate %}
-                                            <span class="badge bg-info text-dark">{{ record.heart_rate }}</span>
-                                        {% endif %}
-                                        <br>
-                                        {% if record.blood_pressure_high %}
-                                            <small class="text-muted">{{ record.blood_pressure_high }}/{{ record.blood_pressure_low }}</small>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-start text-muted small" style="max-width: 150px;">{{ record.note }}</td>
-                                </tr>
-                                {% else %}
-                                <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">
-                                        还没有记录哦，快去上方添加第一条完整数据吧！
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                <div class="list-group list-group-flush" style="max-height: 700px; overflow-y: auto;">
+                    {% for record in records %}
+                    <div class="list-group-item history-item p-3 border-0 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge badge-date rounded-pill px-3">{{ record.date }}</span>
+                            <small class="text-muted">{{ record.steps }} 步</small>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-bold text-dark fs-5">{{ record.weight }}</span> <small class="text-muted">kg</small>
+                            </div>
+                            <div class="text-end">
+                                {% if record.note %}
+                                <i class="bi bi-chat-left-text text-info" title="{{ record.note }}" data-bs-toggle="tooltip"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if record.blood_pressure_high %}
+                        <div class="mt-2 small text-muted">
+                            <i class="bi bi-heart me-1"></i>BP: {{ record.blood_pressure_high }}/{{ record.blood_pressure_low }} | HR: {{ record.heart_rate }}
+                        </div>
+                        {% endif %}
                     </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 mb-2 d-block opacity-50"></i>
+                        暂无记录，快去添加吧！
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-function syncDeviceData() {
-    // 1. 获取按钮元素，改变状态
-    const btn = document.querySelector('button[onclick="syncDeviceData()"]');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 同步中...';
-    btn.disabled = true;
+    // 初始化 Tooltips (为了显示备注气泡)
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 
-    // 2. 调用后端接口
-    fetch('/api/simulate_import')
-        .then(response => response.json())
-        .then(result => {
-            if (result.status === 'success') {
-                const data = result.data;
-                
-                // === 新增：自动获取当前日期并填充 (格式 YYYY-MM-DD) ===
-                const now = new Date();
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                const todayStr = `${year}-${month}-${day}`;
-                
-                // 填充日期
-                const dateInput = document.getElementById('date');
-                if(dateInput) dateInput.value = todayStr;
+    // 默认选中今天日期
+    document.getElementById('date').valueAsDate = new Date();
 
-                // 3. 自动填充其他表单字段
-                document.getElementById('weight').value = data.weight;
-                document.getElementById('steps').value = data.steps;
-                document.getElementById('calories').value = data.calories;
-                document.getElementById('sleep_hours').value = data.sleep_hours;
-                document.getElementById('heart_rate').value = data.heart_rate;
-                document.getElementById('blood_pressure_high').value = data.bp_high;
-                document.getElementById('blood_pressure_low').value = data.bp_low;
-                document.getElementById('note').value = data.note;
+    function syncDeviceData() {
+        const btn = document.querySelector('button[onclick="syncDeviceData()"]');
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 同步中...';
+        btn.disabled = true;
 
-                // 4. 成功提示
-                alert(result.message);
-            } else {
-                alert('同步失败：' + (result.message || '未知错误'));
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('连接设备接口出错，请检查网络或后台服务');
-        })
-        .finally(() => {
-            // 5. 恢复按钮状态
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        });
-}
+        fetch('/api/simulate_import')
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    const data = result.data;
+                    document.getElementById('weight').value = data.weight;
+                    document.getElementById('steps').value = data.steps;
+                    document.getElementById('calories').value = data.calories;
+                    document.getElementById('sleep_hours').value = data.sleep_hours;
+                    document.getElementById('heart_rate').value = data.heart_rate;
+                    document.getElementById('blood_pressure_high').value = data.bp_high;
+                    document.getElementById('blood_pressure_low').value = data.bp_low;
+                    document.getElementById('note').value = data.note;
+
+                    // 简单的成功提示动画
+                    btn.classList.remove('btn-sync');
+                    btn.classList.add('btn-success');
+                    btn.innerHTML = '<i class="bi bi-check-lg"></i> 同步成功';
+                    setTimeout(() => {
+                        btn.innerHTML = originalContent;
+                        btn.classList.remove('btn-success');
+                        btn.classList.add('btn-sync');
+                        btn.disabled = false;
+                    }, 2000);
+                } else {
+                    alert('同步失败：' + result.message);
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('连接错误');
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            });
+    }
 </script>
-
 </body>
 </html>
