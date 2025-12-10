@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>健康评估报告</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        body { background-color: #525659; font-family: 'Segoe UI', sans-serif; padding: 30px; }
+
+        /* === A4 纸张模拟 === */
+        .a4-page {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 20mm;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        /* 打印专用样式 */
+        .report-header { border-bottom: 3px solid #11998e; padding-bottom: 20px; margin-bottom: 30px; }
+        .report-title { font-size: 24px; font-weight: bold; color: #333; }
+        .report-meta { color: #666; font-size: 14px; text-align: right; }
+
+        .section-title {
+            font-size: 16px; font-weight: bold; color: #11998e;
+            border-left: 4px solid #11998e; padding-left: 10px; margin: 30px 0 15px 0;
+            background-color: #f8f9fa; padding-top: 5px; padding-bottom: 5px;
+        }
+
+        /* 数据网格 */
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; text-align: center; }
+        .stat-item { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+        .stat-label { font-size: 12px; color: #888; text-transform: uppercase; }
+        .stat-value { font-size: 20px; font-weight: bold; color: #333; margin-top: 5px; }
+
+        /* 悬浮下载按钮 */
+        .fab-download {
+            position: fixed; bottom: 30px; right: 30px;
+            width: 60px; height: 60px; border-radius: 50%;
+            background: #11998e; color: white; border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 24px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.3s; z-index: 999;
+        }
+        .fab-download:hover { transform: scale(1.1); background: #0e8076; }
+    </style>
+</head>
+<body>
+
+<button class="fab-download" onclick="downloadPDF()" title="下载 PDF">
+    <i class="bi bi-file-earmark-pdf"></i>
+</button>
+
+<div class="a4-page" id="report-content">
+
+    <div class="report-header d-flex justify-content-between align-items-end">
+        <div>
+            <div class="text-uppercase text-muted small fw-bold ls-1">Health Assistant</div>
+            <div class="report-title">个人健康评估报告</div>
+        </div>
+        <div class="report-meta">
+            <div>用户：{{ user.nickname }}</div>
+            <div>生成日期：{{ generate_date }}</div>
+            <div class="badge bg-primary mt-1">月度总结</div>
+        </div>
+    </div>
+
+    <div class="section-title">核心体征概览</div>
+    <div class="stat-grid">
+        <div class="stat-item">
+            <div class="stat-label">BMI 指数</div>
+            <div class="stat-value text-primary">{{ bmi }}</div>
+            <div class="small text-{{ 'success' if bmi_status=='正常' else 'warning' }}">{{ bmi_status }}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">最新体重</div>
+            <div class="stat-value">{{ last_rec.weight }} <span class="small fw-normal">kg</span></div>
+            <div class="small text-muted">月均 {{ avg_weight }}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">体脂率</div>
+            <div class="stat-value">{{ last_rec.body_fat or '--' }} <span class="small fw-normal">%</span></div>
+            <div class="small text-muted">身体成分</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">日均步数</div>
+            <div class="stat-value">{{ avg_steps }}</div>
+            <div class="small text-muted">活跃度</div>
+        </div>
+    </div>
+
+    <div class="section-title">近 30 天数据趋势</div>
+    <div style="height: 250px; width: 100%; margin-bottom: 20px;">
+        <canvas id="trendChart"></canvas>
+    </div>
+
+    <div class="section-title">近期体检数据 (最近 5 次)</div>
+    <table class="table table-sm table-striped small" style="font-size: 0.9rem;">
+        <thead class="table-light"><tr><th>日期</th><th>体重</th><th>体脂%</th><th>血糖</th><th>血压</th><th>睡眠</th></tr></thead>
+        <tbody>
+            {% for i in range(5) %}
+            {% if dates[loop.index0] %} <tr>
+                <td>{{ dates[-(loop.index)] }}</td> <td>{{ weights[-(loop.index)] }} kg</td>
+                <td>--</td> <td>--</td>
+                <td>--</td>
+                <td>-- h</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="text-center small text-muted fst-italic">*仅展示部分关键数据，完整记录请查阅 APP。</div>
+
+    <div class="section-title">AI 健康指导建议</div>
+    <div class="p-3 bg-light rounded border">
+        {% if latest_plan %}
+            <h6 class="fw-bold">{{ latest_plan.goal }}</h6>
+            <div id="ai-content" class="small text-secondary" style="line-height: 1.6;">{{ latest_plan.content }}</div>
+        {% else %}
+            <p class="text-muted text-center my-3">暂无 AI 建议，请先使用“AI 顾问”功能。</p>
+        {% endif %}
+    </div>
+
+    <div class="mt-5 pt-3 border-top text-center text-muted" style="font-size: 10px;">
+        <p>本报告由 Health Assistant AI 生成，仅供健康参考，不能替代专业医疗诊断。</p>
+        <p>Generated at {{ generate_date }} | Page 1 of 1</p>
+    </div>
+</div>
+
+<script>
+    // 1. 渲染图表
+    const ctx = document.getElementById('trendChart');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ dates | tojson }},
+            datasets: [
+                { label: '体重 (kg)', data: {{ weights | tojson }}, borderColor: '#11998e', tension: 0.4 },
+                { label: '步数', data: {{ steps | tojson }}, borderColor: '#38ef7d', yAxisID: 'y1', borderDash: [5,5], tension: 0.4 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: { display: true, position: 'left' },
+                y1: { display: true, position: 'right', grid: { display: false } }
+            },
+            plugins: { legend: { position: 'top' } }
+        }
+    });
+
+    // 2. 渲染 Markdown
+    document.addEventListener('DOMContentLoaded', () => {
+        const aiDiv = document.getElementById('ai-content');
+        if(aiDiv) aiDiv.innerHTML = marked.parse(aiDiv.textContent);
+    });
+
+    // 3. PDF 下载功能
+    function downloadPDF() {
+        const element = document.getElementById('report-content');
+        const opt = {
+            margin:       0,
+            filename:     'Health_Report_{{ user.nickname }}.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 }, // 2倍缩放，清晰度更高
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // 隐藏下载按钮防止被截屏进去
+        document.querySelector('.fab-download').style.display = 'none';
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            // 下载完成后恢复按钮
+            document.querySelector('.fab-download').style.display = 'flex';
+        });
+    }
+</script>
+
+</body>
+</html>
