@@ -1,16 +1,13 @@
 from app.extensions import db
 from datetime import datetime
+from flask import url_for
 import json
 
-
-# ... (User, PostLike, Comment, Post 表保持不变，省略以节省空间) ...
-# 请保留上面的 User, Post 等类，只修改下面的 HealthRecord 和 HealthPlan
-
-# === 用户表 (保持不变) ===
+# === 用户表 ===
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=True)  # 暂时允许为空，避免旧数据报错
+    email = db.Column(db.String(120), unique=True, nullable=True)
     password = db.Column(db.String(200), nullable=False)
     nickname = db.Column(db.String(80))
     gender = db.Column(db.String(10))
@@ -21,10 +18,25 @@ class User(db.Model):
     is_banned = db.Column(db.Boolean, default=False)
     can_post = db.Column(db.Boolean, default=True)
 
+    # 🔥 新增：头像字段 (存储文件名)
+    avatar = db.Column(db.String(200), nullable=True)
+
     records = db.relationship('HealthRecord', backref='user', lazy=True)
     plans = db.relationship('HealthPlan', backref='user', lazy=True)
     posts = db.relationship('Post', backref='user', lazy=True)
     comments = db.relationship('Comment', backref='user', lazy=True)
+
+    # 🔥 新增：头像 URL 辅助属性
+    # 前端直接调用 {{ user.avatar_url }} 即可自动判断
+    @property
+    def avatar_url(self):
+        if self.avatar:
+            # 如果有上传过头像，返回本地静态文件路径
+            return url_for('static', filename='avatars/' + self.avatar)
+        else:
+            # 否则返回 UI Avatars 生成的默认头像
+            name = self.nickname if self.nickname else self.username
+            return f"https://ui-avatars.com/api/?name={name}&background=0d6efd&color=fff&size=128"
 
 
 class PostLike(db.Model):
@@ -79,20 +91,18 @@ class HealthRecord(db.Model):
     blood_pressure_low = db.Column(db.Integer)
 
 
-# === 🔥 修改：健康计划表 ===
 class HealthPlan(db.Model):
     __tablename__ = 'health_plan'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     goal = db.Column(db.String(100))
-    content = db.Column(db.Text)  # 这里的 Markdown 文本
+    content = db.Column(db.Text)
 
-    # 新增：存储任务列表 JSON 字符串 (例如: '[{"title":"跑步","done":false}]')
+    # 存储任务列表 JSON 字符串
     tasks_json = db.Column(db.Text, default='[]')
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # 辅助方法：获取任务列表对象
     def get_tasks(self):
         try:
             return json.loads(self.tasks_json) if self.tasks_json else []

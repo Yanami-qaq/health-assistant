@@ -24,7 +24,8 @@
                     {% if streak_days > 0 %}🔥 连签 {{ streak_days }} 天{% else %}记得打卡哦{% endif %}
                 </div>
             </div>
-            <img src="https://ui-avatars.com/api/?name={{ nickname }}&background=0d6efd&color=fff" class="rounded-circle me-3" width="40">
+
+            <img src="{{ user.avatar_url }}" class="rounded-circle me-3" width="40" height="40" style="object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
 
             <div class="dropdown">
                 <a href="#" class="btn btn-light rounded-circle" data-bs-toggle="dropdown"><i class="bi bi-gear"></i></a>

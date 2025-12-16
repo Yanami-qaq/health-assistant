@@ -37,7 +37,7 @@
             </a>
         </div>
         {% endif %}
-        </div>
+    </div>
 </nav>
 
 <div class="container pb-5">
@@ -45,7 +45,7 @@
         <div class="col-md-4">
             <div class="sticky-sidebar">
                 <div class="social-card p-4 text-center">
-                    <img src="https://ui-avatars.com/api/?name={{ current_user.nickname }}&background=0d6efd&color=fff&size=128" class="rounded-circle mb-3 shadow-sm" width="80">
+                    <img src="{{ current_user.avatar_url }}" class="rounded-circle mb-3 shadow-sm" width="80" height="80" style="object-fit: cover;">
                     <h5 class="fw-bold mb-1">{{ current_user.nickname }}</h5>
                     <p class="text-muted small mb-3">
                         {% if current_user.is_admin %} <span class="badge bg-warning text-dark">👑 管理员</span> {% else %} <span class="badge bg-light text-secondary">普通会员</span> {% endif %}
@@ -77,20 +77,70 @@
         </div>
 
         <div class="col-md-8">
-            <h5 class="mb-3 fw-bold text-secondary px-2">最新动态</h5>
+
+            <div class="d-flex align-items-center justify-content-between mb-3 px-2">
+                <h5 class="fw-bold text-secondary m-0">最新动态</h5>
+                <form action="{{ url_for('community.index') }}" method="GET" class="d-flex" style="max-width: 300px;">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                        <input type="text" name="q" class="form-control border-start-0 ps-0" placeholder="搜索帖子..." value="{{ search_query }}">
+                        {% if search_query %}
+                        <a href="{{ url_for('community.index') }}" class="btn btn-light border" title="清除搜索"><i class="bi bi-x-lg"></i></a>
+                        {% endif %}
+                        <button class="btn btn-primary" type="submit">搜索</button>
+                    </div>
+                </form>
+            </div>
+
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-info py-2 small border-0 shadow-sm mb-3">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            {% if search_query and not posts %}
+            <div class="text-center py-5">
+                <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3">没有找到包含 "<strong>{{ search_query }}</strong>" 的帖子</p>
+                <a href="{{ url_for('community.index') }}" class="btn btn-sm btn-outline-primary rounded-pill">返回全部</a>
+            </div>
+            {% endif %}
+
             {% for post in posts %}
             <div class="social-card p-4 {% if post.is_announcement %}border border-danger border-opacity-25{% endif %}">
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="post-header m-0">
-                        <img src="https://ui-avatars.com/api/?name={{ post.user.nickname }}&background=random&color=fff" class="user-avatar">
+                        <img src="{{ post.user.avatar_url }}" class="user-avatar shadow-sm">
                         <div>
-                            <div class="fw-bold text-dark d-flex align-items-center">{{ post.user.nickname }} {% if post.is_announcement %}<span class="badge bg-danger ms-2" style="font-size: 0.6rem;">公告</span>{% endif %}</div>
+                            <div class="fw-bold text-dark d-flex align-items-center">
+                                {{ post.user.nickname }}
+                                {% if post.is_announcement %}<span class="badge bg-danger ms-2" style="font-size: 0.6rem;">公告</span>{% endif %}
+                            </div>
                             <div class="small text-muted" style="font-size: 0.8rem;">{{ post.created_at.strftime('%m-%d %H:%M') }}</div>
                         </div>
                     </div>
-                    {% if session['is_admin'] %}
-                    <a href="{{ url_for('admin.delete_post', post_id=post.id) }}" onclick="return confirm('确定删除？')" class="text-secondary opacity-50 hover-danger"><i class="bi bi-trash"></i></a>
-                    {% endif %}
+
+                    <div class="d-flex gap-2">
+                        {% if session['is_admin'] %}
+                        <a href="{{ url_for('community.toggle_pin', post_id=post.id) }}" class="btn btn-light btn-sm text-secondary rounded-circle" title="{{ '取消置顶' if post.is_announcement else '置顶帖子' }}">
+                            <i class="bi {{ 'bi-pin-angle-fill text-danger' if post.is_announcement else 'bi-pin-angle' }}"></i>
+                        </a>
+                        {% endif %}
+
+                        {% if post.user_id == session['user_id'] %}
+                        <a href="{{ url_for('community.edit_post', post_id=post.id) }}" class="btn btn-light btn-sm text-secondary rounded-circle" title="编辑">
+                            <i class="bi bi-pencil-fill"></i>
+                        </a>
+                        {% endif %}
+
+                        {% if post.user_id == session['user_id'] or session['is_admin'] %}
+                        <a href="{{ url_for('community.delete_post', post_id=post.id) }}" onclick="return confirm('确定要删除这条帖子吗？此操作无法撤销。')" class="btn btn-light btn-sm text-danger rounded-circle" title="删除">
+                            <i class="bi bi-trash-fill"></i>
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <div class="mb-3 mt-2">
@@ -121,8 +171,39 @@
                 </div>
             </div>
             {% else %}
-            <div class="text-center py-5"><img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" width="100" class="opacity-25 mb-3"><p class="text-muted">还没有帖子，来做第一个发言的人吧！</p></div>
+                {% if not search_query %}
+                <div class="text-center py-5"><img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" width="100" class="opacity-25 mb-3"><p class="text-muted">还没有帖子，来做第一个发言的人吧！</p></div>
+                {% endif %}
             {% endfor %}
+
+            {% if pagination.pages > 1 %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+
+                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                        <a class="page-link rounded-pill px-3 me-2 border-0 shadow-sm"
+                           href="{{ url_for('community.index', page=pagination.prev_num, q=search_query) if pagination.has_prev else '#' }}">
+                           <i class="bi bi-chevron-left small"></i> 上一页
+                        </a>
+                    </li>
+
+                    <li class="page-item disabled">
+                        <span class="page-link border-0 bg-transparent fw-bold text-muted">
+                            {{ pagination.page }} / {{ pagination.pages }}
+                        </span>
+                    </li>
+
+                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                        <a class="page-link rounded-pill px-3 ms-2 border-0 shadow-sm"
+                           href="{{ url_for('community.index', page=pagination.next_num, q=search_query) if pagination.has_next else '#' }}">
+                           下一页 <i class="bi bi-chevron-right small"></i>
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+            {% endif %}
+
         </div>
     </div>
 </div>
