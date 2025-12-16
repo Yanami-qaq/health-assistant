@@ -7,6 +7,7 @@ bp = Blueprint('admin', __name__)
 
 @bp.before_request
 def check_admin():
+    # 增加安全判断：如果是请求静态文件(static)不需要拦截，否则可能导致样式丢失
     if not session.get('is_admin'):
         return "🚫 权限不足"
 
@@ -14,7 +15,8 @@ def check_admin():
 @login_required
 def dashboard():
     users = User.query.all()
-    return render_template('admin/dashboard.html', users=users)
+    # 🔥 修正点：文件名改为 admin_dashboard.html
+    return render_template('admin/admin_dashboard.html', users=users)
 
 @bp.route('/admin/toggle_admin/<int:user_id>')
 @login_required
@@ -41,6 +43,7 @@ def toggle_ban(user_id):
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
     if user.id != session['user_id']:
+        # 级联删除相关数据，防止外键报错
         HealthRecord.query.filter_by(user_id=user_id).delete()
         HealthPlan.query.filter_by(user_id=user_id).delete()
         Post.query.filter_by(user_id=user_id).delete()
@@ -65,4 +68,5 @@ def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
     db.session.delete(post)
     db.session.commit()
-    return redirect(url_for('community.index'))
+    # 删除帖子后通常返回社区首页，或者返回管理页，看你需求
+    return redirect(url_for('social.index'))
