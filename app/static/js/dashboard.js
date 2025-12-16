@@ -1,18 +1,33 @@
 /* app/static/js/dashboard.js */
 
-function toggleTask(planId, taskIdx, element) {
+function toggleTask(taskId, element) {
+    // 1. 视觉上的即时反馈（防止网络延迟导致卡顿感）
     element.classList.toggle('completed');
+
+    // 2. 发送请求给后端
     fetch('/plan/toggle_task', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ plan_id: planId, task_idx: taskIdx })
-    }).then(res => res.json())
-      .then(data => {
-          if(data.status !== 'success') {
-              element.classList.toggle('completed');
-              alert('同步失败，请检查网络');
-          }
-      });
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            task_id: taskId  // 🔥 关键修改：发送 task_id，而不是 plan_id + index
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status !== 'success') {
+            // 如果失败，回滚视觉状态并提示
+            element.classList.toggle('completed');
+            alert('同步失败，请重试');
+        } else {
+            console.log('Task ' + taskId + ' updated.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        element.classList.toggle('completed'); // 回滚
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -97,10 +97,23 @@ class HealthPlan(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     goal = db.Column(db.String(100))
     content = db.Column(db.Text)
-
-    # 存储任务列表 JSON 字符串
     tasks_json = db.Column(db.Text, default='[]')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    tasks = db.relationship('PlanTask', backref='plan', lazy=True, cascade="all, delete-orphan")
 
+    def get_tasks(self):
+        """
+        兼容性辅助方法：返回字典列表，方便前端渲染
+        """
+        return [{"id": t.id, "title": t.title, "done": t.is_done} for t in self.tasks]
+
+
+class PlanTask(db.Model):
+    __tablename__ = 'plan_task'
+    id = db.Column(db.Integer, primary_key=True)
+    plan_id = db.Column(db.Integer, db.ForeignKey('health_plan.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    is_done = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def get_tasks(self):

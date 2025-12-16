@@ -141,7 +141,7 @@
                     {% if latest_plan and latest_plan.get_tasks() %}
                         <div class="task-list-group shadow-sm mb-4">
                             {% for task in latest_plan.get_tasks() %}
-                            <div class="task-item {% if task.done %}completed{% endif %}" onclick="toggleTask({{ latest_plan.id }}, {{ loop.index0 }}, this)">
+                            <div class="task-item {% if task.done %}completed{% endif %}" onclick="toggleTask({{ task.id }}, this)">
                                 <div class="task-checkbox"></div>
                                 <span>{{ task.title }}</span>
                             </div>
