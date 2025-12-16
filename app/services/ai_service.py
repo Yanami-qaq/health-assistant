@@ -1,11 +1,13 @@
+# app/services/ai_service.py
 from openai import OpenAI
 from flask import current_app
 
 def call_deepseek_advisor(system_prompt, user_prompt):
     """
-    封装 DeepSeek API 调用逻辑
+    封装 DeepSeek API 底层调用逻辑
     """
     try:
+        # 从配置读取 Key
         client = OpenAI(
             api_key=current_app.config['DEEPSEEK_API_KEY'],
             base_url=current_app.config['DEEPSEEK_BASE_URL']
@@ -22,5 +24,6 @@ def call_deepseek_advisor(system_prompt, user_prompt):
         return response.choices[0].message.content
 
     except Exception as e:
+        # 建议换成 logger.error
         print(f"❌ AI Service Error: {e}")
         return f"连接 AI 失败，请检查网络或配置。\n错误信息: {e}"

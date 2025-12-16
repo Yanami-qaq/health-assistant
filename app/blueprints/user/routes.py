@@ -1,13 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db
 from app.models import User
 from app.decorators import login_required
+from app.blueprints.user import bp
 
-bp = Blueprint('user', __name__)
-
-
-# === ✨ 新增：用户引导/完善资料页 ===
 @bp.route('/profile/setup', methods=['GET', 'POST'])
 @login_required
 def profile_setup():
@@ -18,15 +15,12 @@ def profile_setup():
         user.birth_year = request.form.get('birth_year')
         user.height = float(request.form.get('height'))
         user.medical_history = request.form.get('medical_history')
-
         db.session.commit()
         flash('🎉 档案建立成功！欢迎使用 Health Assistant')
         return redirect(url_for('main.dashboard'))
 
-    return render_template('profile_setup.html', user=user)
+    return render_template('user/profile_setup.html', user=user)
 
-
-# === 原有的设置页路由 (保持不变) ===
 @bp.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
@@ -38,16 +32,13 @@ def settings():
         height_val = request.form.get('height')
         user.height = float(height_val) if height_val else None
         user.medical_history = request.form.get('medical_history')
-
         db.session.commit()
         session['nickname'] = user.nickname
         flash('✅ 个人资料已更新！')
         return redirect(url_for('user.settings'))
 
-    return render_template('settings.html', user=user)
+    return render_template('user/settings.html', user=user)
 
-
-# === 原有的修改密码路由 (保持不变) ===
 @bp.route('/settings/password', methods=['POST'])
 @login_required
 def update_password():
