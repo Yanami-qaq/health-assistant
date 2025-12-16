@@ -1,4 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail
 
-# 只初始化对象，不绑定 app，绑定操作放在工厂函数里
+# 初始化数据库和邮件插件
 db = SQLAlchemy()
+mail = Mail()

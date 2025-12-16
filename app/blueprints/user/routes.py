@@ -1,10 +1,11 @@
-from flask import render_template, request, redirect, url_for, session, flash
+# app/blueprints/user/routes.py
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db
 from app.models import User
 from app.decorators import login_required
-from app.blueprints.user import bp
 
+bp = Blueprint('user', __name__)
 @bp.route('/profile/setup', methods=['GET', 'POST'])
 @login_required
 def profile_setup():

@@ -10,6 +10,7 @@ import json
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=True)  # 暂时允许为空，避免旧数据报错
     password = db.Column(db.String(200), nullable=False)
     nickname = db.Column(db.String(80))
     gender = db.Column(db.String(10))

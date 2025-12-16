@@ -54,12 +54,16 @@
                                 </div>
                             </div>
 
-                            <div class="mb-4">
+                            <div class="mb-3">
                                 <label class="form-label small text-muted">密码</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light border-0"><i class="bi bi-key"></i></span>
                                     <input type="password" class="form-control" name="password" placeholder="••••••••" required>
                                 </div>
+                            </div>
+
+                            <div class="text-end mb-4">
+                                <a href="{{ url_for('auth.forgot_password') }}" class="small text-decoration-none" style="color: #11998e;">忘记密码？</a>
                             </div>
 
                             <button type="submit" class="btn btn-auth btn-login-user w-100 mb-3" id="btn-submit">立即登录</button>

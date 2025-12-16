@@ -1,3 +1,2 @@
-from flask import Blueprint
-bp = Blueprint('auth', __name__)
-from . import routes
+# app/blueprints/auth/__init__.py
+from .routes import bp
