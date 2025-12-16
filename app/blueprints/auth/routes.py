@@ -4,8 +4,26 @@ from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from app.models import User
 from app.extensions import db
 from app.services.email_service import EmailService
+import re  # 🔥 引入正则模块
 
-bp = Blueprint('auth', __name__, url_prefix='/auth')
+bp = Blueprint('auth', __name__, url_prefix='/auth')  # 确保这里加上了 url_prefix
+
+
+# === 辅助函数：校验密码强度 ===
+def is_password_strong(password):
+    """
+    校验密码强度：
+    1. 长度至少 8 位
+    2. 包含至少一个数字
+    3. 包含至少一个字母
+    """
+    if len(password) < 8:
+        return False, "❌ 密码太短：长度至少需要 8 位"
+    if not re.search(r"\d", password):
+        return False, "❌ 密码太弱：必须包含至少一个数字"
+    if not re.search(r"[a-zA-Z]", password):
+        return False, "❌ 密码太弱：必须包含至少一个字母"
+    return True, ""
 
 
 @bp.route('/register', methods=['GET', 'POST'])
@@ -15,6 +33,13 @@ def register():
         password = request.form.get('password')
         nickname = request.form.get('nickname')
         email = request.form.get('email')
+
+        # === 🔥 1. 注册时增加密码强度校验 ===
+        is_valid, msg = is_password_strong(password)
+        if not is_valid:
+            flash(msg)
+            return redirect(url_for('auth.register'))
+        # ===================================
 
         if User.query.filter((User.username == username) | (User.email == email)).first():
             flash('用户名或邮箱已存在')
@@ -29,7 +54,6 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        # 发送欢迎邮件
         EmailService.send_welcome_email(new_user)
 
         flash('注册成功！欢迎邮件已发送，请登录')
@@ -82,7 +106,7 @@ def logout():
     return redirect(url_for('auth.login'))
 
 
-# === 🔥 新增：忘记密码路由 ===
+# === 忘记密码路由 ===
 @bp.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
@@ -90,10 +114,8 @@ def forgot_password():
         user = User.query.filter_by(email=email).first()
 
         if user:
-            # 生成 Token
             s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
             token = s.dumps(user.email, salt='recover-key')
-            # 发送邮件
             EmailService.send_password_reset_email(user, token)
 
         flash('📩 如果该邮箱已注册，重置邮件已发送，请检查收件箱。')
@@ -102,12 +124,11 @@ def forgot_password():
     return render_template('auth/forgot_password.html')
 
 
-# === 🔥 新增：重置密码路由 ===
+# === 重置密码路由 ===
 @bp.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
     try:
-        # 验证 Token，15分钟有效 (900秒)
         email = s.loads(token, salt='recover-key', max_age=900)
     except SignatureExpired:
         flash('❌ 链接已过期，请重新申请重置。')
@@ -124,6 +145,13 @@ def reset_password(token):
     if request.method == 'POST':
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
+
+        # === 🔥 2. 重置时增加密码强度校验 ===
+        is_valid, msg = is_password_strong(password)
+        if not is_valid:
+            flash(msg)
+            return redirect(url_for('auth.reset_password', token=token))
+        # ===================================
 
         if password != confirm_password:
             flash('❌ 两次输入的密码不一致')
