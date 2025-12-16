@@ -6,64 +6,16 @@
     <title>登录 - Health Assistant</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <style>
-        body {
-            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
-        .login-card {
-            border: none;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        .login-sidebar {
-            background: linear-gradient(45deg, #11998e, #38ef7d);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            padding: 40px;
-        }
-        .form-control {
-            border-radius: 10px;
-            padding: 12px;
-            background-color: #f8f9fa;
-            border: 1px solid #eee;
-        }
-        .form-control:focus {
-            box-shadow: none;
-            border-color: #38ef7d;
-            background-color: #fff;
-        }
-        .btn-login {
-            border-radius: 10px;
-            padding: 12px;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-        .btn-user { background-color: #11998e; border: none; color: white; }
-        .btn-user:hover { background-color: #0c7a70; transform: translateY(-2px); }
-        .btn-admin { background-color: #343a40; border: none; color: white; }
-        .btn-admin:hover { background-color: #23272b; transform: translateY(-2px); }
-        .role-switch { cursor: pointer; opacity: 0.6; transition: 0.3s; border-bottom: 2px solid transparent; }
-        .role-switch.active { opacity: 1; font-weight: bold; color: #11998e; border-bottom: 2px solid #11998e; }
-        .role-switch.active-admin { color: #343a40; border-bottom: 2px solid #343a40; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 </head>
-<body>
+<body class="bg-login">
 
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-10 col-lg-9">
-            <div class="card login-card">
+            <div class="card auth-card">
                 <div class="row g-0">
-                    <div class="col-md-5 d-none d-md-flex login-sidebar">
+                    <div class="col-md-5 d-none d-md-flex auth-sidebar bg-gradient-login">
                         <i class="bi bi-activity" style="font-size: 4rem; margin-bottom: 20px;"></i>
                         <h3 class="fw-bold">Health Assistant</h3>
                         <p class="text-center opacity-75 mt-2">您的 24 小时 AI 健康管家</p>
@@ -101,7 +53,7 @@
                                     <input type="text" class="form-control" name="username" placeholder="请输入用户名" required>
                                 </div>
                             </div>
-                            
+
                             <div class="mb-4">
                                 <label class="form-label small text-muted">密码</label>
                                 <div class="input-group">
@@ -110,7 +62,7 @@
                                 </div>
                             </div>
 
-                            <button type="submit" class="btn btn-login btn-user w-100 mb-3" id="btn-submit">立即登录</button>
+                            <button type="submit" class="btn btn-auth btn-login-user w-100 mb-3" id="btn-submit">立即登录</button>
 
                             <div class="text-center">
                                 <span class="text-muted small">还没有账号？</span>
@@ -135,15 +87,15 @@
         if (type === 'admin') {
             userTab.classList.remove('active');
             adminTab.classList.add('active', 'active-admin');
-            btn.classList.remove('btn-user');
-            btn.classList.add('btn-admin');
+            btn.classList.remove('btn-login-user');
+            btn.classList.add('btn-login-admin');
             btn.innerHTML = '管理员登录 <i class="bi bi-arrow-right-short"></i>';
             title.innerText = '后台管理系统';
         } else {
             adminTab.classList.remove('active', 'active-admin');
             userTab.classList.add('active');
-            btn.classList.remove('btn-admin');
-            btn.classList.add('btn-user');
+            btn.classList.remove('btn-login-admin');
+            btn.classList.add('btn-login-user');
             btn.innerHTML = '立即登录';
             title.innerText = '欢迎回来 👋';
         }

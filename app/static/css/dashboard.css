@@ -1,0 +1,62 @@
+/* app/static/css/dashboard.css */
+
+/* === 全局背景核心设置 === */
+body {
+    background-color: #f0f2f5; /* 这个浅灰色就是背景 */
+    font-family: 'Nunito', sans-serif;
+}
+
+/* 导航栏 */
+.navbar {
+    background-color: #fff;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+}
+
+/* 活力值卡片 (渐变背景) */
+.vitality-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white; border: none; border-radius: 20px; overflow: hidden;
+}
+.vitality-score { font-size: 3.5rem; font-weight: 800; line-height: 1; }
+
+/* 通用卡片 */
+.custom-card {
+    border: none; border-radius: 16px; background: #fff;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    transition: transform 0.2s, box-shadow 0.2s;
+    height: 100%;
+}
+.custom-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); }
+
+/* 快捷入口图标框 */
+.icon-box {
+    width: 50px; height: 50px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; margin-bottom: 10px;
+}
+
+/* === 任务清单样式 === */
+.task-list-group { border-radius: 12px; overflow: hidden; border: 1px solid #f0f0f0; }
+.task-item {
+    cursor: pointer; transition: 0.2s; border: none; border-bottom: 1px solid #f0f0f0;
+    display: flex; align-items: center; padding: 12px 15px; background: #fff;
+}
+.task-item:last-child { border-bottom: none; }
+.task-item:hover { background-color: #f8f9fa; }
+
+.task-checkbox {
+    width: 20px; height: 20px; margin-right: 12px; cursor: pointer;
+    border: 2px solid #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    transition: 0.2s; flex-shrink: 0;
+}
+.task-item.completed .task-checkbox { background-color: #198754; border-color: #198754; }
+.task-item.completed .task-checkbox::after { content: '✔'; color: white; font-size: 12px; }
+.task-item.completed span { text-decoration: line-through; color: #adb5bd; }
+
+/* === 计划书滚动区 === */
+.plan-content-box {
+    max-height: 300px; overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: #ced4da transparent;
+}
+.plan-markdown-output h6 { font-size: 1rem; margin-top: 10px; font-weight: bold; color: #2c3e50; }
+.plan-markdown-output ul { padding-left: 20px; margin-bottom: 8px; }

@@ -8,62 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-    <style>
-        /* 全局样式 */
-        body { background-color: #f0f2f5; font-family: 'Nunito', sans-serif; }
-
-        /* 导航栏 */
-        .navbar { background-color: #fff; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
-
-        /* 活力值卡片 (渐变背景) */
-        .vitality-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; border: none; border-radius: 20px; overflow: hidden;
-        }
-        .vitality-score { font-size: 3.5rem; font-weight: 800; line-height: 1; }
-
-        /* 通用卡片 */
-        .custom-card {
-            border: none; border-radius: 16px; background: #fff;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-            transition: transform 0.2s, box-shadow 0.2s;
-            height: 100%;
-        }
-        .custom-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); }
-
-        /* 快捷入口图标框 */
-        .icon-box {
-            width: 50px; height: 50px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem; margin-bottom: 10px;
-        }
-
-        /* === 任务清单样式 === */
-        .task-list-group { border-radius: 12px; overflow: hidden; border: 1px solid #f0f0f0; }
-        .task-item {
-            cursor: pointer; transition: 0.2s; border: none; border-bottom: 1px solid #f0f0f0;
-            display: flex; align-items: center; padding: 12px 15px; background: #fff;
-        }
-        .task-item:last-child { border-bottom: none; }
-        .task-item:hover { background-color: #f8f9fa; }
-
-        .task-checkbox {
-            width: 20px; height: 20px; margin-right: 12px; cursor: pointer;
-            border: 2px solid #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            transition: 0.2s; flex-shrink: 0;
-        }
-        .task-item.completed .task-checkbox { background-color: #198754; border-color: #198754; }
-        .task-item.completed .task-checkbox::after { content: '✔'; color: white; font-size: 12px; }
-        .task-item.completed span { text-decoration: line-through; color: #adb5bd; }
-
-        /* === 计划书滚动区 === */
-        .plan-content-box {
-            max-height: 300px; overflow-y: auto;
-            scrollbar-width: thin; scrollbar-color: #ced4da transparent;
-        }
-        .plan-markdown-output h6 { font-size: 1rem; margin-top: 10px; font-weight: bold; color: #2c3e50; }
-        .plan-markdown-output ul { padding-left: 20px; margin-bottom: 8px; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 </head>
 <body>
 
@@ -84,19 +29,16 @@
             <div class="dropdown">
                 <a href="#" class="btn btn-light rounded-circle" data-bs-toggle="dropdown"><i class="bi bi-gear"></i></a>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4">
-
                     <li>
                         <a class="dropdown-item py-2 text-success fw-bold" href="{{ url_for('main.report_preview') }}" target="_blank">
                             <i class="bi bi-file-earmark-pdf me-2"></i> 生成体检报告
                         </a>
                     </li>
                     <li><hr class="dropdown-divider"></li>
-
                     {% if session.get('is_admin') %}
                     <li><a class="dropdown-item py-2 text-primary fw-bold" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-shield-lock me-2"></i> 管理后台</a></li>
                     <li><hr class="dropdown-divider"></li>
                     {% endif %}
-
                     <li><a class="dropdown-item py-2" href="{{ url_for('user.settings') }}"><i class="bi bi-person-gear me-2"></i> 个人设置</a></li>
                     <li><a class="dropdown-item py-2 text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i> 退出登录</a></li>
                 </ul>
@@ -106,7 +48,6 @@
 </nav>
 
 <div class="container pb-5">
-
     <div class="row mb-4 g-3">
         <div class="col-lg-4">
             <div class="card vitality-card h-100 p-4">
@@ -157,7 +98,6 @@
 
     <div class="row g-4">
         <div class="col-lg-8">
-
             <div class="card custom-card mb-4 p-3">
                 <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
                     <h5 class="fw-bold mb-0">🏃 运动与体重</h5>
@@ -198,7 +138,6 @@
                 </div>
                 <div class="card-body pt-0">
                     {% if latest_plan and latest_plan.get_tasks() %}
-
                         <div class="task-list-group shadow-sm mb-4">
                             {% for task in latest_plan.get_tasks() %}
                             <div class="task-item {% if task.done %}completed{% endif %}" onclick="toggleTask({{ latest_plan.id }}, {{ loop.index0 }}, this)">
@@ -207,7 +146,6 @@
                             </div>
                             {% endfor %}
                         </div>
-
                         <div class="accordion" id="planAccordion">
                             <div class="accordion-item border-0 bg-transparent">
                                 <h2 class="accordion-header">
@@ -222,13 +160,11 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="mt-3 text-center">
                             <a href="{{ url_for('plan.index') }}" class="btn btn-sm btn-outline-primary rounded-pill">
                                 <i class="bi bi-chat-dots me-1"></i> 调整计划
                             </a>
                         </div>
-
                     {% else %}
                         <div class="text-center py-5">
                             <div class="text-muted"><i class="bi bi-clipboard-check" style="font-size: 3rem;"></i></div>
@@ -247,103 +183,22 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
 <script>
-    // === 1. 任务打勾逻辑 ===
-    function toggleTask(planId, taskIdx, element) {
-        element.classList.toggle('completed'); // 视觉上先变色
-
-        fetch('/plan/toggle_task', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ plan_id: planId, task_idx: taskIdx })
-        }).then(res => res.json())
-          .then(data => {
-              if(data.status !== 'success') {
-                  element.classList.toggle('completed'); // 失败了就变回来
-                  alert('同步失败，请检查网络');
-              }
-          });
-    }
-
-    // === 2. Markdown 渲染 ===
-    document.addEventListener('DOMContentLoaded', () => {
-        const planEl = document.getElementById('plan-markdown');
-        if (planEl) planEl.innerHTML = marked.parse(planEl.textContent);
-    });
-
-    // === 3. 接收后端数据 ===
-    const dates = {{ dates | tojson }};
-    const weights = {{ weights | tojson }};
-    const steps = {{ steps | tojson }};
-    const bodyFats = {{ body_fats | tojson }};
-    const sleepHours = {{ sleep_hours | tojson }};
-    const waterIntakes = {{ water_intakes | tojson }};
-    const heartRates = {{ heart_rates | tojson }};
-    const bloodGlucoses = {{ blood_glucoses | tojson }};
-
-    // === 4. 初始化所有图表 ===
-    Chart.defaults.font.family = "'Nunito', sans-serif";
-    Chart.defaults.color = '#6c757d';
-
-    const commonOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { labels: { boxWidth: 8, usePointStyle: true } } },
-        scales: { x: { grid: { display: false } }, y: { grid: { borderDash: [5,5] } } }
+    // 注入数据
+    const chartData = {
+        dates: {{ dates | tojson }},
+        weights: {{ weights | tojson }},
+        steps: {{ steps | tojson }},
+        bodyFats: {{ body_fats | tojson }},
+        sleepHours: {{ sleep_hours | tojson }},
+        waterIntakes: {{ water_intakes | tojson }},
+        heartRates: {{ heart_rates | tojson }},
+        bloodGlucoses: {{ blood_glucoses | tojson }}
     };
 
-    // 主图 (双轴)
-    new Chart(document.getElementById('mainChart'), {
-        type: 'line',
-        data: {
-            labels: dates,
-            datasets: [
-                { label: '体重 (kg)', data: weights, borderColor: '#ff6b6b', backgroundColor: 'rgba(255, 107, 107, 0.1)', yAxisID: 'y', tension: 0.4, fill: true },
-                { label: '步数', data: steps, borderColor: '#4dabf7', backgroundColor: 'rgba(77, 171, 247, 0.1)', yAxisID: 'y1', tension: 0.4, fill: true }
-            ]
-        },
-        options: {
-            ...commonOptions,
-            interaction: { mode: 'index', intersect: false },
-            scales: { y: { display: true, position: 'left' }, y1: { display: true, position: 'right', grid: { display: false } } }
-        }
-    });
-
-    // 体脂 & 睡眠
-    new Chart(document.getElementById('bodySleepChart'), {
-        type: 'line',
-        data: {
-            labels: dates,
-            datasets: [
-                { label: '体脂%', data: bodyFats, borderColor: '#fdcb6e', yAxisID: 'y', tension: 0.4 },
-                { label: '睡眠(h)', data: sleepHours, borderColor: '#a29bfe', yAxisID: 'y1', type: 'bar', backgroundColor: '#a29bfe', borderRadius: 3 }
-            ]
-        },
-        options: { ...commonOptions, scales: { y: { display: true }, y1: { display: true, position: 'right', grid: { display: false } } } }
-    });
-
-    // 饮水量
-    new Chart(document.getElementById('waterChart'), {
-        type: 'bar',
-        data: {
-            labels: dates,
-            datasets: [{ label: '毫升', data: waterIntakes, backgroundColor: '#00cec9', borderRadius: 4 }]
-        },
-        options: { ...commonOptions, plugins: { legend: { display: false } } }
-    });
-
-    // 心肺 & 血糖
-    new Chart(document.getElementById('cardioChart'), {
-        type: 'line',
-        data: {
-            labels: dates,
-            datasets: [
-                { label: '心率', data: heartRates, borderColor: '#ff7675', tension: 0.4, pointRadius: 1 },
-                { label: '血糖', data: bloodGlucoses, borderColor: '#6c5ce7', borderDash: [3,3], tension: 0.4, pointRadius: 3 }
-            ]
-        },
-        options: commonOptions
-    });
+    initDashboardCharts(chartData);
 </script>
 </body>
 </html>

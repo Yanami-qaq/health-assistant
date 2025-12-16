@@ -1,0 +1,89 @@
+/* app/static/css/auth.css */
+
+/* === 全局基础 === */
+body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* === 背景差异化 === */
+body.bg-login {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+}
+body.bg-register {
+    background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+}
+
+/* === 卡片通用 === */
+.auth-card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+/* === 侧边栏通用 === */
+.auth-sidebar {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    padding: 40px;
+    position: relative;
+}
+.bg-gradient-login { background: linear-gradient(45deg, #11998e, #38ef7d); }
+.bg-gradient-register { background: linear-gradient(45deg, #667eea, #764ba2); }
+
+/* === 表单控件 === */
+.form-control {
+    border-radius: 10px;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border: 1px solid #eee;
+}
+.form-control:focus {
+    box-shadow: none;
+    background-color: #fff;
+}
+/* 登录页特定聚焦色 */
+.bg-login .form-control:focus { border-color: #38ef7d; }
+/* 注册页特定聚焦色 */
+.bg-register .form-control:focus { border-color: #667eea; }
+
+/* === 按钮 === */
+.btn-auth {
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: bold;
+    transition: all 0.3s;
+    border: none;
+    color: white;
+}
+.btn-login-user { background-color: #11998e; }
+.btn-login-user:hover { background-color: #0c7a70; transform: translateY(-2px); }
+.btn-login-admin { background-color: #343a40; }
+.btn-login-admin:hover { background-color: #23272b; transform: translateY(-2px); }
+
+.btn-register-submit {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+}
+.btn-register-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* === 登录页角色切换 === */
+.role-switch { cursor: pointer; opacity: 0.6; transition: 0.3s; border-bottom: 2px solid transparent; }
+.role-switch.active { opacity: 1; font-weight: bold; color: #11998e; border-bottom: 2px solid #11998e; }
+.role-switch.active-admin { color: #343a40; border-bottom: 2px solid #343a40; }
+
+/* === 注册页装饰 === */
+.sidebar-circle { position: absolute; background: rgba(255,255,255,0.1); border-radius: 50%; }
+.input-group-text { border-radius: 10px 0 0 10px; border: 1px solid #eee; background-color: #f8f9fa; color: #888; border-right: 0; }
+.input-group .form-control { border-radius: 0 10px 10px 0; border-left: 0; }
+.login-link { color: #667eea; text-decoration: none; font-weight: bold; transition: 0.2s; }
+.login-link:hover { color: #764ba2; text-decoration: underline; }
