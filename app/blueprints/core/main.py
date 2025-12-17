@@ -36,33 +36,59 @@ def dashboard():
 @login_required
 def report_preview():
     user_id = session['user_id']
-    # 复用 Service 中的一部分逻辑，或者单独写
-    # 这里为了演示方便，暂时保留原逻辑，但建议后续也封装
     from app.models import User, HealthRecord, HealthPlan
     from datetime import datetime
 
     user = User.query.get(user_id)
+    # 获取最近 30 条记录
     records = HealthRecord.query.filter_by(user_id=user_id).order_by(HealthRecord.date.desc()).limit(30).all()
 
     if not records:
-        return render_template('main/dashboard.html', user=user, nickname=user.nickname, error="数据不足")
+        # 如果完全没有数据，返回并提示（防止 dashboard 报错，这里简单处理）
+        return render_template('main/dashboard.html', user=user, nickname=session.get('nickname'),
+                               error="数据不足，无法生成报告")
 
+    # 取最新的一条记录
     last_rec = records[0]
+
+    # === 🔥 修复开始：处理数据中的 None 值 ===
+
+    # 1. 准备日期列表 (倒序，用于图表显示)
     dates = [r.date.strftime('%m-%d') for r in records][::-1]
-    weights = [r.weight for r in records][::-1]
-    steps = [r.steps for r in records][::-1]
 
-    avg_weight = round(sum(weights) / len(weights), 1)
-    avg_steps = int(sum(steps) / len(steps))
+    # 2. 准备体重和步数数据 (把 None 变成 0，防止报错)
+    weights = [(r.weight or 0) for r in records][::-1]
+    steps = [(r.steps or 0) for r in records][::-1]
 
+    # 3. 计算平均值 (注意：计算平均体重时，应该排除 0 的数据，否则平均值会偏低)
+    valid_weights = [w for w in weights if w > 0]
+    if valid_weights:
+        avg_weight = round(sum(valid_weights) / len(valid_weights), 1)
+    else:
+        avg_weight = 0
+
+    valid_steps = [s for s in steps if s > 0]
+    if valid_steps:
+        avg_steps = int(sum(valid_steps) / len(valid_steps))
+    else:
+        avg_steps = 0
+
+    # 4. 睡眠数据处理 (已经包含 None 过滤)
     valid_sleeps = [r.sleep_hours for r in records if r.sleep_hours]
     avg_sleep = round(sum(valid_sleeps) / len(valid_sleeps), 1) if valid_sleeps else 0
 
+    # 5. BMI 计算 (防止 last_rec.weight 为 None)
     bmi = 0
     bmi_status = "未知"
-    if user.height and last_rec.weight:
+
+    # 如果最新的一条没体重（比如是同步来的），就尝试用最近一次有效的体重，或者用平均体重
+    current_weight = last_rec.weight
+    if not current_weight and valid_weights:
+        current_weight = valid_weights[-1]  # 取最近的一个有效体重
+
+    if user.height and current_weight:
         h_m = user.height / 100
-        bmi = round(last_rec.weight / (h_m * h_m), 1)
+        bmi = round(current_weight / (h_m * h_m), 1)
         if bmi < 18.5:
             bmi_status = "偏瘦"
         elif 18.5 <= bmi <= 24:
@@ -71,6 +97,8 @@ def report_preview():
             bmi_status = "超重"
         else:
             bmi_status = "肥胖"
+
+    # === 🔥 修复结束 ===
 
     latest_plan = HealthPlan.query.filter_by(user_id=user.id).order_by(HealthPlan.created_at.desc()).first()
 
