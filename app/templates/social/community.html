@@ -2,12 +2,13 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>社区广场 - Health Assistant</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <style>
         body { background-color: #f0f2f5; font-family: 'Nunito', sans-serif; }
-        .navbar { background-color: #fff; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
         .social-card { border: none; border-radius: 16px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 24px; }
         .create-post-card { background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%); }
         .post-header { display: flex; align-items: center; margin-bottom: 15px; }
@@ -25,15 +26,17 @@
 
 <nav class="navbar navbar-expand-lg sticky-top mb-4">
     <div class="container">
-        <a class="navbar-brand fw-bold text-primary" href="{{ url_for('main.dashboard') }}">
+        <a class="navbar-brand fw-bold text-primary d-none d-md-block" href="{{ url_for('main.dashboard') }}">
             <i class="bi bi-chevron-left me-2"></i>返回仪表盘
         </a>
-        <span class="navbar-text fw-bold text-dark">💬 交流广场</span>
+        <span class="navbar-brand fw-bold text-dark d-md-none">💬 交流广场</span>
+
+        <span class="navbar-text fw-bold text-dark d-none d-md-block">💬 交流广场</span>
 
         {% if session.get('is_admin') %}
         <div class="ms-auto">
             <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill shadow-sm">
-                <i class="bi bi-shield-lock-fill me-1"></i> 管理后台
+                <i class="bi bi-shield-lock-fill me-1"></i><span class="d-none d-sm-inline"> 管理后台</span>
             </a>
         </div>
         {% endif %}
@@ -44,7 +47,7 @@
     <div class="row">
         <div class="col-md-4">
             <div class="sticky-sidebar">
-                <div class="social-card p-4 text-center">
+                <div class="social-card p-4 text-center d-none d-md-block">
                     <img src="{{ current_user.avatar_url }}" class="rounded-circle mb-3 shadow-sm" width="80" height="80" style="object-fit: cover;">
                     <h5 class="fw-bold mb-1">{{ current_user.nickname }}</h5>
                     <p class="text-muted small mb-3">
@@ -54,7 +57,7 @@
                 </div>
 
                 <div class="social-card create-post-card p-4">
-                    <h6 class="fw-bold mb-3"><i class="bi bi-pen-fill text-primary me-2"></i>分享你的健康心得</h6>
+                    <h6 class="fw-bold mb-3"><i class="bi bi-pen-fill text-primary me-2"></i>分享健康心得</h6>
                     {% if current_user.can_post or current_user.is_admin %}
                     <form method="POST" action="{{ url_for('community.index') }}">
                         <div class="mb-3">
@@ -109,7 +112,7 @@
             {% endif %}
 
             {% for post in posts %}
-            <div class="social-card p-4 {% if post.is_announcement %}border border-danger border-opacity-25{% endif %}">
+            <div class="social-card p-3 p-md-4 {% if post.is_announcement %}border border-danger border-opacity-25{% endif %}">
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="post-header m-0">
                         <img src="{{ post.user.avatar_url }}" class="user-avatar shadow-sm">
@@ -179,27 +182,23 @@
             {% if pagination.pages > 1 %}
             <nav aria-label="Page navigation" class="mt-4">
                 <ul class="pagination justify-content-center">
-
                     <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
                         <a class="page-link rounded-pill px-3 me-2 border-0 shadow-sm"
                            href="{{ url_for('community.index', page=pagination.prev_num, q=search_query) if pagination.has_prev else '#' }}">
                            <i class="bi bi-chevron-left small"></i> 上一页
                         </a>
                     </li>
-
                     <li class="page-item disabled">
                         <span class="page-link border-0 bg-transparent fw-bold text-muted">
                             {{ pagination.page }} / {{ pagination.pages }}
                         </span>
                     </li>
-
                     <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
                         <a class="page-link rounded-pill px-3 ms-2 border-0 shadow-sm"
                            href="{{ url_for('community.index', page=pagination.next_num, q=search_query) if pagination.has_next else '#' }}">
                            下一页 <i class="bi bi-chevron-right small"></i>
                         </a>
                     </li>
-
                 </ul>
             </nav>
             {% endif %}
@@ -207,6 +206,24 @@
         </div>
     </div>
 </div>
+
+<nav class="mobile-bottom-nav d-md-none">
+    <a href="{{ url_for('main.dashboard') }}" class="mobile-nav-item {{ 'active' if request.endpoint == 'main.dashboard' }}">
+        <i class="bi bi-speedometer2"></i>首页
+    </a>
+    <a href="{{ url_for('plan.index') }}" class="mobile-nav-item {{ 'active' if request.endpoint == 'plan.index' }}">
+        <i class="bi bi-robot"></i>顾问
+    </a>
+    <a href="{{ url_for('record.index') }}" class="mobile-nav-item mobile-nav-item-add">
+        <i class="bi bi-plus-circle-fill"></i>
+    </a>
+    <a href="{{ url_for('community.index') }}" class="mobile-nav-item {{ 'active' if request.endpoint == 'community.index' }}">
+        <i class="bi bi-chat-heart"></i>社区
+    </a>
+    <a href="{{ url_for('user.settings') }}" class="mobile-nav-item {{ 'active' if request.endpoint == 'user.settings' }}">
+        <i class="bi bi-person-circle"></i>我的
+    </a>
+</nav>
 
 <script>
 function toggleLike(postId, btnElement) {

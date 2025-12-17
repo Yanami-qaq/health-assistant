@@ -60,3 +60,68 @@ body {
 }
 .plan-markdown-output h6 { font-size: 1rem; margin-top: 10px; font-weight: bold; color: #2c3e50; }
 .plan-markdown-output ul { padding-left: 20px; margin-bottom: 8px; }
+
+/* =========================================
+   📱 全局移动端适配 (核心)
+   ========================================= */
+
+/* 1. 底部导航栏样式 (仅手机显示) */
+.mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px 0;
+    z-index: 1050; /* 确保在最上层 */
+    padding-bottom: calc(8px + env(safe-area-inset-bottom)); /* 适配 iPhone 底部黑条 */
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+}
+
+.mobile-nav-item {
+    text-align: center;
+    color: #9aa0a6;
+    text-decoration: none;
+    font-size: 10px;
+    flex: 1;
+}
+
+.mobile-nav-item i {
+    display: block;
+    font-size: 1.4rem;
+    margin-bottom: 2px;
+}
+
+.mobile-nav-item.active {
+    color: #0d6efd;
+    font-weight: bold;
+}
+
+/* 特殊处理中间的“记录”按钮 */
+.mobile-nav-item-add i {
+    font-size: 2.5rem;
+    color: #0d6efd;
+    margin-top: -15px; /* 向上突起 */
+    filter: drop-shadow(0 4px 6px rgba(13, 110, 253, 0.3));
+}
+
+/* 2. 防止内容被底部导航遮挡 */
+@media (max-width: 767.98px) {
+    body {
+        padding-bottom: 80px; /* 留出导航栏高度 */
+    }
+
+    /* 手机端卡片间距缩小 */
+    .card-body, .p-4, .p-5 {
+        padding: 1.25rem !important; /* 强制改为 p-3 大小 */
+    }
+
+    /* 隐藏不必要的装饰元素 */
+    .d-mobile-none {
+        display: none !important;
+    }
+}
