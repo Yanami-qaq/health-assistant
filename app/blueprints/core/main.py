@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, session, redirect, url_for
+from flask import Blueprint, render_template, session, redirect, url_for, flash
 from app.decorators import login_required
 from app.services.stats_service import StatsService
 
@@ -31,7 +31,7 @@ def dashboard():
                            heatmap_data=data['heatmap_data'])
 
 
-# 生成报告预览页 (逻辑简单，暂保留在 Controller，也可移入 Service)
+# 生成报告预览页
 @bp.route('/report/preview')
 @login_required
 def report_preview():
@@ -43,48 +43,40 @@ def report_preview():
     # 获取最近 30 条记录
     records = HealthRecord.query.filter_by(user_id=user_id).order_by(HealthRecord.date.desc()).limit(30).all()
 
+    # ✅ 修复点1：没有数据时，跳转回仪表盘并提示，防止 streak_days 报错
     if not records:
-        # 如果完全没有数据，返回并提示（防止 dashboard 报错，这里简单处理）
-        return render_template('main/dashboard.html', user=user, nickname=session.get('nickname'),
-                               error="数据不足，无法生成报告")
+        flash("暂无健康数据，请先记录或同步数据后再生成报告。", "warning")
+        return redirect(url_for('main.dashboard'))
 
-    # 取最新的一条记录
     last_rec = records[0]
 
-    # === 🔥 修复开始：处理数据中的 None 值 ===
-
-    # 1. 准备日期列表 (倒序，用于图表显示)
+    # === 🔥 修复点2：处理数据中的 None 值 (防止 TypeError) ===
     dates = [r.date.strftime('%m-%d') for r in records][::-1]
 
-    # 2. 准备体重和步数数据 (把 None 变成 0，防止报错)
+    # 把 None 转换成 0，防止同步数据后体重为空导致报错
     weights = [(r.weight or 0) for r in records][::-1]
     steps = [(r.steps or 0) for r in records][::-1]
 
-    # 3. 计算平均值 (注意：计算平均体重时，应该排除 0 的数据，否则平均值会偏低)
+    # 计算平均体重 (排除 0 值，否则平均值会偏低)
     valid_weights = [w for w in weights if w > 0]
-    if valid_weights:
-        avg_weight = round(sum(valid_weights) / len(valid_weights), 1)
-    else:
-        avg_weight = 0
+    avg_weight = round(sum(valid_weights) / len(valid_weights), 1) if valid_weights else 0
 
+    # 计算平均步数
     valid_steps = [s for s in steps if s > 0]
-    if valid_steps:
-        avg_steps = int(sum(valid_steps) / len(valid_steps))
-    else:
-        avg_steps = 0
+    avg_steps = int(sum(valid_steps) / len(valid_steps)) if valid_steps else 0
 
-    # 4. 睡眠数据处理 (已经包含 None 过滤)
+    # 睡眠数据处理 (已经包含 None 过滤)
     valid_sleeps = [r.sleep_hours for r in records if r.sleep_hours]
     avg_sleep = round(sum(valid_sleeps) / len(valid_sleeps), 1) if valid_sleeps else 0
 
-    # 5. BMI 计算 (防止 last_rec.weight 为 None)
+    # BMI 计算 (防止 last_rec.weight 为 None)
     bmi = 0
     bmi_status = "未知"
 
-    # 如果最新的一条没体重（比如是同步来的），就尝试用最近一次有效的体重，或者用平均体重
+    # 获取当前有效体重 (如果最新的一条没体重，就找最近一次有的)
     current_weight = last_rec.weight
     if not current_weight and valid_weights:
-        current_weight = valid_weights[-1]  # 取最近的一个有效体重
+        current_weight = valid_weights[-1]
 
     if user.height and current_weight:
         h_m = user.height / 100
@@ -97,8 +89,6 @@ def report_preview():
             bmi_status = "超重"
         else:
             bmi_status = "肥胖"
-
-    # === 🔥 修复结束 ===
 
     latest_plan = HealthPlan.query.filter_by(user_id=user.id).order_by(HealthPlan.created_at.desc()).first()
 
