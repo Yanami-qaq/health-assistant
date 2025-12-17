@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; }
+        .header { color: #11998e; margin-bottom: 20px; }
+        .btn { display: inline-block; background-color: #11998e; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }
+        .footer { margin-top: 30px; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="header">你好，{{ user.nickname }}！</h2>
+        <p>🎉 欢迎加入 <strong>Health Assistant</strong>。</p>
+        <p>我们很高兴能成为您的健康管理伙伴。在这里，您可以记录每日体征、获取 AI 健康建议，并与社区伙伴共同进步。</p>
+
+        <p>请点击下方按钮登录您的账户：</p>
+        <a href="{{ url_for('auth.login', _external=True) }}" class="btn">立即登录</a>
+
+        <div class="footer">
+            <p>此邮件由系统自动发送，请勿回复。</p>
+            <p>© Health Assistant 团队</p>
+        </div>
+    </div>
+</body>
+</html>

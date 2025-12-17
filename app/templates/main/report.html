@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>健康评估报告</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>健康评估报告</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -10,20 +10,47 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
-        body { background-color: #525659; font-family: 'Segoe UI', sans-serif; padding: 30px; }
+        body { background-color: #525659; font-family: 'Segoe UI', sans-serif; padding: 20px; }
 
-        /* === A4 纸张模拟 === */
+        /* === 纸张模拟 (响应式优化) === */
         .a4-page {
             background: white;
-            width: 210mm;
+            /* 手机/电脑屏幕上：自适应宽度，最大不超过 A4 宽度 */
+            width: 100%;
+            max-width: 210mm;
             min-height: 297mm;
             margin: 0 auto;
             padding: 20mm;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             position: relative;
         }
 
-        /* 打印专用样式 */
+        /* 📱 手机端微调 */
+        @media (max-width: 768px) {
+            body { padding: 0; background-color: white; }
+            .a4-page {
+                box-shadow: none;
+                padding: 15px;
+                max-width: 100%;
+                min-height: auto; /* 手机上不需要强制高度 */
+            }
+            .fab-download { bottom: 20px; right: 20px; width: 50px; height: 50px; font-size: 20px; }
+            .report-title { font-size: 20px; }
+        }
+
+        /* 🖨️ 打印/生成PDF专用样式 */
+        @media print {
+            body { background-color: white; padding: 0; }
+            .a4-page {
+                width: 210mm;
+                height: 297mm;
+                padding: 20mm;
+                box-shadow: none;
+                margin: 0;
+            }
+            .fab-download { display: none !important; }
+        }
+
         .report-header { border-bottom: 3px solid #11998e; padding-bottom: 20px; margin-bottom: 30px; }
         .report-title { font-size: 24px; font-weight: bold; color: #333; }
         .report-meta { color: #666; font-size: 14px; text-align: right; }
@@ -34,13 +61,14 @@
             background-color: #f8f9fa; padding-top: 5px; padding-bottom: 5px;
         }
 
-        /* 数据网格 */
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; text-align: center; }
+        /* 手机上改为 2 列 */
+        @media (max-width: 576px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+
         .stat-item { background: #f8f9fa; padding: 15px; border-radius: 8px; }
         .stat-label { font-size: 12px; color: #888; text-transform: uppercase; }
         .stat-value { font-size: 20px; font-weight: bold; color: #333; margin-top: 5px; }
 
-        /* 悬浮下载按钮 */
         .fab-download {
             position: fixed; bottom: 30px; right: 30px;
             width: 60px; height: 60px; border-radius: 50%;
@@ -98,22 +126,37 @@
 
     <div class="section-title">近 30 天数据趋势</div>
     <div style="height: 250px; width: 100%; margin-bottom: 20px;">
-        <canvas id="trendChart"></canvas>
+        {% if dates %}
+            <canvas id="trendChart"></canvas>
+        {% else %}
+            <div class="h-100 d-flex align-items-center justify-content-center bg-light rounded text-muted">
+                <i class="bi bi-bar-chart me-2"></i> 暂无足够数据生成图表
+            </div>
+        {% endif %}
     </div>
 
     <div class="section-title">近期体检数据 (最近 5 次)</div>
     <table class="table table-sm table-striped small" style="font-size: 0.9rem;">
         <thead class="table-light"><tr><th>日期</th><th>体重</th><th>体脂%</th><th>血糖</th><th>血压</th><th>睡眠</th></tr></thead>
         <tbody>
-            {% for i in range(5) %}
-            {% if dates[loop.index0] %} <tr>
-                <td>{{ dates[-(loop.index)] }}</td> <td>{{ weights[-(loop.index)] }} kg</td>
-                <td>--</td> <td>--</td>
-                <td>--</td>
-                <td>-- h</td>
-            </tr>
+            {# 🔥 修复：安全循环逻辑，防止数据少于 5 条时报错 #}
+            {% if dates %}
+                {# 计算实际需要循环的次数，最多 5 次 #}
+                {% set count = dates|length if dates|length < 5 else 5 %}
+                {% for i in range(count) %}
+                <tr>
+                    {# 使用倒序索引取最新的数据 #}
+                    <td>{{ dates[-(i+1)] }}</td>
+                    <td>{{ weights[-(i+1)] }} kg</td>
+                    <td>--</td> {# 暂无字段 #}
+                    <td>--</td> {# 暂无字段 #}
+                    <td>--</td> {# 暂无字段 #}
+                    <td>-- h</td> {# 暂无字段 #}
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="6" class="text-center text-muted p-3">暂无记录</td></tr>
             {% endif %}
-            {% endfor %}
         </tbody>
     </table>
     <div class="text-center small text-muted fst-italic">*仅展示部分关键数据，完整记录请查阅 APP。</div>
@@ -135,7 +178,8 @@
 </div>
 
 <script>
-    // 1. 渲染图表
+    // 1. 渲染图表 (仅当有数据时)
+    {% if dates %}
     const ctx = document.getElementById('trendChart');
     new Chart(ctx, {
         type: 'line',
@@ -155,11 +199,14 @@
             plugins: { legend: { position: 'top' } }
         }
     });
+    {% endif %}
 
     // 2. 渲染 Markdown
     document.addEventListener('DOMContentLoaded', () => {
         const aiDiv = document.getElementById('ai-content');
-        if(aiDiv) aiDiv.innerHTML = marked.parse(aiDiv.textContent);
+        if(aiDiv && typeof marked !== 'undefined') {
+            aiDiv.innerHTML = marked.parse(aiDiv.textContent);
+        }
     });
 
     // 3. PDF 下载功能
@@ -174,11 +221,12 @@
         };
 
         // 隐藏下载按钮防止被截屏进去
-        document.querySelector('.fab-download').style.display = 'none';
+        const btn = document.querySelector('.fab-download');
+        btn.style.display = 'none';
 
         html2pdf().set(opt).from(element).save().then(() => {
             // 下载完成后恢复按钮
-            document.querySelector('.fab-download').style.display = 'flex';
+            btn.style.display = 'flex';
         });
     }
 </script>
