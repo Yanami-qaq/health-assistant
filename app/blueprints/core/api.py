@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, session, request
 from app.blueprints.health.service import RecordService
 from app.extensions import db
-from app.models import HealthRecord
+from app.models import HealthRecord, User
 from datetime import datetime
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -54,14 +54,7 @@ def upload_health_data():
             except (ValueError, TypeError):
                 errors.append('步数格式错误')
         
-        # 验证体重
-        if 'weight' in data:
-            try:
-                weight_val = float(data['weight'])
-                if weight_val < 20 or weight_val > 300:
-                    errors.append('体重数据异常')
-            except (ValueError, TypeError):
-                errors.append('体重格式错误')
+        # 体重不需要验证，因为会直接从数据库的user表读取
         
         # 验证体脂率
         if 'body_fat' in data:
@@ -142,6 +135,15 @@ def upload_health_data():
                 'details': errors
             }), 400
 
+        # 获取用户信息，检查是否设置了体重
+        user = User.query.get(session['user_id'])
+        if not user or not user.weight:
+            return jsonify({
+                'status': 'error',
+                'message': '无法获取健康数据，请检查设置',
+                'details': '请在账户设置页面设置您的体重'
+            }), 400
+
         # 获取今日日期
         today = datetime.now().date()
 
@@ -157,7 +159,8 @@ def upload_health_data():
             db.session.add(record)
 
         # 更新数据（模拟从智能设备同步）
-        # 注意：智能设备可以同步步数、卡路里、睡眠、心率、血压、体重、体脂、血糖
+        # 注意：智能设备可以同步步数、卡路里、睡眠、心率、血压、体脂、血糖
+        # 体重直接从数据库的user表读取，不从前端模拟数据中获取
         if 'steps' in data:
             record.steps = int(data['steps'])
         if 'calories' in data:
@@ -170,8 +173,8 @@ def upload_health_data():
             record.blood_pressure_high = int(data['blood_pressure_high'])
         if 'blood_pressure_low' in data:
             record.blood_pressure_low = int(data['blood_pressure_low'])
-        if 'weight' in data:
-            record.weight = float(data['weight'])
+        # 体重直接从用户设置中读取，不从前端模拟数据中获取
+        record.weight = user.weight
         if 'body_fat' in data:
             record.body_fat = float(data['body_fat'])
         if 'blood_glucose' in data:

@@ -281,9 +281,7 @@
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 同步中...';
 
         // 模拟生成随机健康数据（从智能设备获取）
-        const baseWeight = {{ user.weight if user.weight else 70 }};
-        const weightVariation = (Math.random() - 0.5) * 1;
-        
+        // 体重不需要在模拟数据中发送，后端会直接从数据库读取用户设置的体重
         const mockData = {
             steps: Math.floor(Math.random() * 16000) + 2000,
             calories: Math.floor(Math.random() * 600) + 200,
@@ -291,7 +289,6 @@
             heart_rate: Math.floor(Math.random() * 41) + 50,
             blood_pressure_high: Math.floor(Math.random() * 30) + 110,
             blood_pressure_low: Math.floor(Math.random() * 20) + 70,
-            weight: parseFloat((baseWeight + weightVariation).toFixed(1)),
             body_fat: parseFloat((Math.random() * 15 + 15).toFixed(1)),
             blood_glucose: parseFloat((Math.random() * 2 + 4.0).toFixed(1))
         };
@@ -301,7 +298,20 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(mockData)
         })
-        .then(response => response.json())
+        .then(response => {
+            // 检查HTTP状态
+            if (!response.ok) {
+                return response.json().then(data => {
+                    // 如果有details字段，添加到错误消息中
+                    let errorMsg = data.message || '同步失败';
+                    if (data.details) {
+                        errorMsg += (typeof data.details === 'string' ? '\n' + data.details : '');
+                    }
+                    throw new Error(errorMsg);
+                });
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.status === 'success') {
                 btn.classList.remove('btn-sync');
@@ -318,7 +328,12 @@
         })
         .catch(err => {
             console.error(err);
-            alert('同步失败：' + err.message);
+            let errorMsg = err.message || '同步失败';
+            // 如果是体重未设置错误，提供更友好的提示
+            if (errorMsg.includes('检查设置') || errorMsg.includes('设置您的体重')) {
+                errorMsg = '无法获取健康数据，请检查设置\n\n请在账户设置页面设置您的体重';
+            }
+            alert('同步失败：' + errorMsg);
             btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> <span class="d-none d-sm-inline">同步设备数据</span>';
             btn.disabled = false;
         });

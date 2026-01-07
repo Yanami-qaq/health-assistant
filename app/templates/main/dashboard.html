@@ -313,10 +313,7 @@
         // 体脂率：15-30%（正常范围）
         // 血糖：4.0-6.0 mmol/L（空腹正常血糖）
         
-        // 从用户设置中读取基础体重（如果有的话）
-        const baseWeight = {{ user.weight if user.weight else 70 }};  // 默认70kg
-        const weightVariation = (Math.random() - 0.5) * 1;  // -0.5 到 +0.5 kg的波动
-        
+        // 体重不需要在模拟数据中发送，后端会直接从数据库读取用户设置的体重
         const mockData = {
             steps: Math.floor(Math.random() * 16000) + 2000,
             calories: Math.floor(Math.random() * 600) + 200,
@@ -324,7 +321,6 @@
             heart_rate: Math.floor(Math.random() * 41) + 50,
             blood_pressure_high: Math.floor(Math.random() * 30) + 110,
             blood_pressure_low: Math.floor(Math.random() * 20) + 70,
-            weight: parseFloat((baseWeight + weightVariation).toFixed(1)),
             body_fat: parseFloat((Math.random() * 15 + 15).toFixed(1)),
             blood_glucose: parseFloat((Math.random() * 2 + 4.0).toFixed(1))
         };
@@ -339,7 +335,12 @@
             // 检查HTTP状态
             if (!response.ok) {
                 return response.json().then(data => {
-                    throw new Error(data.message || '无法获取数据，请检查网络连接');
+                    // 如果有details字段，添加到错误消息中
+                    let errorMsg = data.message || '无法获取数据，请检查网络连接';
+                    if (data.details) {
+                        errorMsg += (typeof data.details === 'string' ? '\n' + data.details : '');
+                    }
+                    throw new Error(errorMsg);
                 });
             }
             return response.json();
@@ -390,6 +391,8 @@
             // 根据错误类型显示不同提示
             if (errMsg.includes('网络') || errMsg.includes('Failed to fetch')) {
                 errorMessage = '<i class="bi bi-wifi-off"></i> 无法获取数据，请检查网络连接';
+            } else if (errMsg.includes('检查设置') || errMsg.includes('设置您的体重')) {
+                errorMessage = '<i class="bi bi-exclamation-triangle-fill"></i> 无法获取健康数据，请检查设置<br><small class="text-muted">请在账户设置页面设置您的体重</small>';
             } else if (errMsg.includes('异常') || errMsg.includes('数据异常')) {
                 errorMessage = '<i class="bi bi-exclamation-triangle-fill"></i> 获取的数据异常，请检查设备或稍后重试';
             } else if (errMsg.includes('失败')) {
