@@ -94,24 +94,24 @@
                                 <input type="date" class="form-control" id="date" name="date" required value="{{ edit_record.date if edit_record else '' }}">
                             </div>
                             <div class="col-6 col-md-3">
-                                <label class="form-label">体重 (kg)</label>
+                                <label class="form-label">体重 (kg) *</label>
                                 <div class="input-group">
                                     <span class="input-group-text px-2"><i class="bi bi-speedometer2"></i></span>
-                                    <input type="number" step="0.1" class="form-control" id="weight" name="weight" placeholder="0.0" value="{{ edit_record.weight if edit_record else '' }}">
+                                    <input type="number" step="0.1" min="20" max="300" class="form-control" id="weight" name="weight" placeholder="请输入" value="{{ edit_record.weight if edit_record else '' }}" required>
                                 </div>
                             </div>
                             <div class="col-6 col-md-3">
                                 <label class="form-label">体脂率 (%)</label>
                                 <div class="input-group">
                                     <span class="input-group-text px-2"><i class="bi bi-pie-chart"></i></span>
-                                    <input type="number" step="0.1" class="form-control" id="body_fat" name="body_fat" placeholder="选填" value="{{ edit_record.body_fat if edit_record and edit_record.body_fat else '' }}">
+                                    <input type="number" step="0.1" min="3" max="60" class="form-control" id="body_fat" name="body_fat" placeholder="选填" value="{{ edit_record.body_fat if edit_record and edit_record.body_fat else '' }}">
                                 </div>
                             </div>
                             <div class="col-6 col-md-3">
                                 <label class="form-label">步数</label>
                                 <div class="input-group">
                                     <span class="input-group-text px-2"><i class="bi bi-footprint"></i></span>
-                                    <input type="number" class="form-control" id="steps" name="steps" placeholder="0" value="{{ edit_record.steps if edit_record else '' }}">
+                                    <input type="number" min="0" max="100000" class="form-control" id="steps" name="steps" placeholder="请输入" value="{{ edit_record.steps if edit_record else '' }}">
                                 </div>
                             </div>
                         </div>
@@ -122,28 +122,28 @@
                                 <label class="form-label">饮水 (ml)</label>
                                 <div class="input-group">
                                     <span class="input-group-text px-2"><i class="bi bi-cup-straw"></i></span>
-                                    <input type="number" class="form-control" id="water_intake" name="water_intake" placeholder="2000" value="{{ edit_record.water_intake if edit_record and edit_record.water_intake else '' }}">
+                                    <input type="number" min="0" max="10000" class="form-control" id="water_intake" name="water_intake" placeholder="选填" value="{{ edit_record.water_intake if edit_record and edit_record.water_intake else '' }}">
                                 </div>
                             </div>
                             <div class="col-6 col-md-3">
                                 <label class="form-label">卡路里</label>
                                 <div class="input-group">
                                     <span class="input-group-text px-2"><i class="bi bi-fire"></i></span>
-                                    <input type="number" class="form-control" id="calories" name="calories" value="{{ edit_record.calories if edit_record else '' }}">
+                                    <input type="number" min="0" max="10000" class="form-control" id="calories" name="calories" placeholder="请输入" value="{{ edit_record.calories if edit_record else '' }}">
                                 </div>
                             </div>
                             <div class="col-6 col-md-3">
                                 <label class="form-label">血糖</label>
                                 <div class="input-group">
                                     <span class="input-group-text px-2"><i class="bi bi-droplet"></i></span>
-                                    <input type="number" step="0.1" class="form-control" id="blood_glucose" name="blood_glucose" placeholder="" value="{{ edit_record.blood_glucose if edit_record and edit_record.blood_glucose else '' }}">
+                                    <input type="number" step="0.1" min="2" max="30" class="form-control" id="blood_glucose" name="blood_glucose" placeholder="选填" value="{{ edit_record.blood_glucose if edit_record and edit_record.blood_glucose else '' }}">
                                 </div>
                             </div>
                             <div class="col-6 col-md-3">
                                 <label class="form-label">睡眠 (h)</label>
                                 <div class="input-group">
                                     <span class="input-group-text px-2"><i class="bi bi-moon-stars"></i></span>
-                                    <input type="number" step="0.1" class="form-control" id="sleep_hours" name="sleep_hours" value="{{ edit_record.sleep_hours if edit_record and edit_record.sleep_hours else '' }}">
+                                    <input type="number" step="0.1" min="0" max="24" class="form-control" id="sleep_hours" name="sleep_hours" placeholder="选填" value="{{ edit_record.sleep_hours if edit_record and edit_record.sleep_hours else '' }}">
                                 </div>
                             </div>
                         </div>
@@ -154,15 +154,15 @@
                                 <label class="form-label">静息心率</label>
                                 <div class="input-group">
                                     <span class="input-group-text px-2"><i class="bi bi-heart-pulse"></i></span>
-                                    <input type="number" class="form-control" id="heart_rate" name="heart_rate" value="{{ edit_record.heart_rate if edit_record and edit_record.heart_rate else '' }}">
+                                    <input type="number" min="30" max="250" class="form-control" id="heart_rate" name="heart_rate" placeholder="选填" value="{{ edit_record.heart_rate if edit_record and edit_record.heart_rate else '' }}">
                                 </div>
                             </div>
                             <div class="col-6 col-md-4">
                                 <label class="form-label">血压 (高/低)</label>
                                 <div class="input-group">
-                                    <input type="number" class="form-control" id="blood_pressure_high" name="bp_high" placeholder="高" value="{{ edit_record.blood_pressure_high if edit_record and edit_record.blood_pressure_high else '' }}">
+                                    <input type="number" min="60" max="250" class="form-control" id="blood_pressure_high" name="bp_high" placeholder="高压" value="{{ edit_record.blood_pressure_high if edit_record and edit_record.blood_pressure_high else '' }}">
                                     <span class="input-group-text px-1">/</span>
-                                    <input type="number" class="form-control" id="blood_pressure_low" name="bp_low" placeholder="低" value="{{ edit_record.blood_pressure_low if edit_record and edit_record.blood_pressure_low else '' }}">
+                                    <input type="number" min="40" max="150" class="form-control" id="blood_pressure_low" name="bp_low" placeholder="低压" value="{{ edit_record.blood_pressure_low if edit_record and edit_record.blood_pressure_low else '' }}">
                                 </div>
                             </div>
                             <div class="col-12 col-md-4">
@@ -254,6 +254,23 @@
     {% if not edit_record %}
     if(document.getElementById('date')) { document.getElementById('date').valueAsDate = new Date(); }
     {% endif %}
+
+    // 表单提交前的额外验证
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const bpHigh = document.getElementById('blood_pressure_high').value;
+        const bpLow = document.getElementById('blood_pressure_low').value;
+        
+        // 验证血压逻辑：如果两个都填了，高压必须大于低压
+        if (bpHigh && bpLow) {
+            if (parseInt(bpHigh) <= parseInt(bpLow)) {
+                e.preventDefault();
+                alert('输入无效，请重新输入：高压必须大于低压');
+                return false;
+            }
+        }
+        
+        return true;
+    });
 
     function handleFileUpload(input) {
         if (input.files.length === 0) return;

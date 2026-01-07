@@ -15,15 +15,27 @@ def profile_setup():
     user = User.query.get(session['user_id'])
     if request.method == 'POST':
         try:
+            # 验证身高
+            height_val = float(request.form.get('height'))
+            if height_val < 50 or height_val > 250:
+                flash('输入无效，请重新输入：身高必须在 50-250 cm 之间')
+                return redirect(url_for('user.profile_setup'))
+            
+            # 验证出生年份
+            birth_year_val = int(request.form.get('birth_year'))
+            if birth_year_val < 1900 or birth_year_val > 2025:
+                flash('输入无效，请重新输入：出生年份必须在 1900-2025 之间')
+                return redirect(url_for('user.profile_setup'))
+            
             user.gender = request.form.get('gender')
-            user.birth_year = int(request.form.get('birth_year'))
-            user.height = float(request.form.get('height'))
+            user.birth_year = birth_year_val
+            user.height = height_val
             user.medical_history = request.form.get('medical_history')
             db.session.commit()
-            flash('✅ 个人资料设置成功！')
+            flash('个人资料设置成功')
             return redirect(url_for('main.dashboard'))
         except ValueError:
-            flash('❌ 请输入有效的数字')
+            flash('输入无效，请重新输入：请输入有效的数字')
             return redirect(url_for('user.profile_setup'))
 
     return render_template('user/profile_setup.html', user=user)
@@ -40,11 +52,18 @@ def settings():
         user.gender = request.form.get('gender')
 
         try:
-            # 处理可能为空的身高字段
+            # 处理可能为空的身高字段并验证范围
             height_val = request.form.get('height')
-            user.height = float(height_val) if height_val else None
+            if height_val:
+                height_float = float(height_val)
+                if height_float < 50 or height_float > 250:
+                    flash('输入无效，请重新输入：身高必须在 50-250 cm 之间')
+                    return redirect(url_for('user.settings'))
+                user.height = height_float
+            else:
+                user.height = None
         except ValueError:
-            flash('❌ 身高必须是数字')
+            flash('输入无效，请重新输入：身高必须是数字')
             return redirect(url_for('user.settings'))
 
         user.medical_history = request.form.get('medical_history')
@@ -65,13 +84,13 @@ def settings():
 
         db.session.commit()
         session['nickname'] = user.nickname
-        flash('✅ 个人资料已更新！')
+        flash('个人资料已更新')
         return redirect(url_for('user.settings'))
 
     return render_template('user/settings.html', user=user)
 
 
-# === 🔥 新增：修改密码路由 (解决报错的关键) ===
+# 修改密码路由
 @bp.route('/update_password', methods=['POST'])
 @login_required
 def update_password():
@@ -83,22 +102,22 @@ def update_password():
 
     # 1. 验证旧密码是否正确
     if not check_password_hash(user.password, old_password):
-        flash('❌ 旧密码错误，无法修改')
+        flash('旧密码错误，无法修改')
         return redirect(url_for('user.settings'))
 
     # 2. 验证两次新密码是否一致
     if new_password != confirm_password:
-        flash('❌ 两次输入的新密码不一致')
+        flash('两次输入的新密码不一致')
         return redirect(url_for('user.settings'))
 
-    # 3. (可选) 可以在这里加密码强度校验，类似 auth 里的逻辑
+    # 3. 可以在这里加密码强度校验，类似 auth 里的逻辑
     if len(new_password) < 6:
-        flash('❌ 新密码太短，至少需要6位')
+        flash('新密码太短，至少需要6位')
         return redirect(url_for('user.settings'))
 
     # 4. 更新密码
     user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
     db.session.commit()
 
-    flash('✅ 密码修改成功！下次请使用新密码登录。')
+    flash('密码修改成功，下次请使用新密码登录')
     return redirect(url_for('user.settings'))
