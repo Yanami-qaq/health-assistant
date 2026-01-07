@@ -15,18 +15,29 @@ def index():
     # === 处理发帖逻辑 ===
     if request.method == 'POST':
         if not user.is_admin and not user.can_post:
-            flash("🚫 您已被管理员禁言！")
+            flash("您已被管理员禁言！")
             return redirect(url_for('community.index'))
 
-        title = request.form.get('title')
-        content = request.form.get('content')
+        title = request.form.get('title', '').strip()
+        content = request.form.get('content', '').strip()
         is_announcement = (request.form.get('is_announcement') == 'on') if user.is_admin else False
 
-        if title and content:
+        # 异常事件流1：检查帖子内容是否为空
+        if not title or not content:
+            flash("帖子内容不能为空，请重新输入内容")
+            return redirect(url_for('community.index'))
+
+        # 异常事件流2：处理系统错误
+        try:
             new_post = Post(user_id=user.id, title=title, content=content, is_announcement=is_announcement)
             db.session.add(new_post)
             db.session.commit()
-            flash('✅ 发布成功！')
+            flash('发布成功！')
+        except Exception as e:
+            db.session.rollback()
+            print(f"Create Post Error: {e}")
+            flash("操作失败，请稍后再试")
+            return redirect(url_for('community.index'))
 
         return redirect(url_for('community.index'))
 
@@ -83,10 +94,22 @@ def like_post(post_id):
 @bp.route('/post/<int:post_id>/comment', methods=['POST'])
 @login_required
 def add_comment(post_id):
-    content = request.form.get('content')
-    if content:
+    content = request.form.get('content', '').strip()
+    
+    # 异常事件流1：检查评论内容是否为空
+    if not content:
+        flash("评论内容不能为空，请重新输入内容")
+        return redirect(url_for('community.index'))
+    
+    # 异常事件流2：处理系统错误
+    try:
         db.session.add(Comment(user_id=session['user_id'], post_id=post_id, content=content))
         db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Add Comment Error: {e}")
+        flash("操作失败，请稍后再试")
+    
     return redirect(url_for('community.index'))
 
 
@@ -96,9 +119,17 @@ def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
     if post.user_id != session['user_id'] and not session.get('is_admin'):
         abort(403)
-    db.session.delete(post)
-    db.session.commit()
-    flash('🗑️ 帖子已删除')
+    
+    # 异常事件流2：处理系统错误
+    try:
+        db.session.delete(post)
+        db.session.commit()
+        flash('帖子已删除')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Delete Post Error: {e}")
+        flash("操作失败，请稍后再试")
+    
     return redirect(url_for('community.index'))
 
 
@@ -109,11 +140,26 @@ def edit_post(post_id):
     if post.user_id != session['user_id']:
         abort(403)
     if request.method == 'POST':
-        post.title = request.form.get('title')
-        post.content = request.form.get('content')
-        db.session.commit()
-        flash('✅ 帖子修改成功！')
-        return redirect(url_for('community.index'))
+        title = request.form.get('title', '').strip()
+        content = request.form.get('content', '').strip()
+        
+        # 异常事件流1：检查帖子内容是否为空
+        if not title or not content:
+            flash("帖子内容不能为空，请重新输入内容")
+            return render_template('social/edit_post.html', post=post)
+        
+        # 异常事件流2：处理系统错误
+        try:
+            post.title = title
+            post.content = content
+            db.session.commit()
+            flash('帖子修改成功！')
+            return redirect(url_for('community.index'))
+        except Exception as e:
+            db.session.rollback()
+            print(f"Edit Post Error: {e}")
+            flash("操作失败，请稍后再试")
+            return render_template('social/edit_post.html', post=post)
     return render_template('social/edit_post.html', post=post)
 
 
@@ -123,8 +169,16 @@ def toggle_pin(post_id):
     if not session.get('is_admin'):
         abort(403)
     post = Post.query.get_or_404(post_id)
-    post.is_announcement = not post.is_announcement
-    db.session.commit()
-    msg = '📌 已置顶该帖' if post.is_announcement else '⬇️ 已取消置顶'
-    flash(msg)
+    
+    # 异常事件流2：处理系统错误
+    try:
+        post.is_announcement = not post.is_announcement
+        db.session.commit()
+        msg = '已置顶该帖' if post.is_announcement else '已取消置顶'
+        flash(msg)
+    except Exception as e:
+        db.session.rollback()
+        print(f"Toggle Pin Error: {e}")
+        flash("操作失败，请稍后再试")
+    
     return redirect(url_for('community.index'))

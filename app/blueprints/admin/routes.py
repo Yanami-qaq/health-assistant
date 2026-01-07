@@ -66,7 +66,16 @@ def toggle_posting(user_id):
 @login_required
 def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
-    db.session.delete(post)
-    db.session.commit()
+    
+    # 异常事件流2：处理系统错误
+    try:
+        db.session.delete(post)
+        db.session.commit()
+        flash('帖子已删除')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Admin Delete Post Error: {e}")
+        flash("操作失败，请稍后再试")
+    
     # 删除帖子后通常返回社区首页，或者返回管理页，看你需求
     return redirect(url_for('social.index'))
