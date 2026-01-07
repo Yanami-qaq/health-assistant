@@ -8,6 +8,31 @@ const sendBtn = document.getElementById('send-btn');
 // 结构: [{role: "user", content: "A"}, {role: "assistant", content: "B"}]
 let chatHistory = [];
 
+// 保存用户健康目标
+function saveGoalType() {
+    const select = document.getElementById('goalTypeSelect');
+    if (!select) return;
+    
+    const goalType = select.value;
+    
+    fetch('/plan/save_goal', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({goal_type: goalType})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // 静默保存，不显示提示
+        } else {
+            console.error('保存目标失败:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('保存目标错误:', error);
+    });
+}
+
 function handleEnter(e) {
     if (e.key === 'Enter') sendMessage();
 }

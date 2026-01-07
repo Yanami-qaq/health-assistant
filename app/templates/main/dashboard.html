@@ -132,48 +132,34 @@
 
             <div class="card custom-card border-0">
                 <div class="card-header bg-white border-0 pt-4 pb-0">
-                    <h5 class="fw-bold text-info"><i class="bi bi-lightbulb me-2"></i>健康小贴士</h5>
-                    <div class="small text-muted mb-3">养成健康生活习惯</div>
+                    <h5 class="fw-bold text-primary"><i class="bi bi-clipboard-check me-2"></i>健康状态评估</h5>
+                    <div class="small text-muted mb-3">AI 智能分析您的健康状况</div>
                 </div>
-                <div class="card-body pt-0">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start p-3 rounded" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                                <i class="bi bi-water me-2 mt-1" style="font-size: 1.2rem;"></i>
-                                <div>
-                                    <div class="fw-bold small mb-1">每日饮水</div>
-                                    <div style="font-size: 0.85rem; opacity: 0.9;">建议每天饮水 2000ml，少量多次更健康</div>
+                <div class="card-body pt-0" id="assessmentContent">
+                    {% if saved_assessment %}
+                        <div id="savedAssessmentContent">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">加载中...</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start p-3 rounded" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
-                                <i class="bi bi-heart-pulse me-2 mt-1" style="font-size: 1.2rem;"></i>
-                                <div>
-                                    <div class="fw-bold small mb-1">适度运动</div>
-                                    <div style="font-size: 0.85rem; opacity: 0.9;">每天步数达到 10000 步，保持身体活力</div>
-                                </div>
-                            </div>
+                        <script>
+                            // 页面加载时自动渲染已保存的评估
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const savedData = {{ saved_assessment | tojson }};
+                                renderAssessment(savedData);
+                            });
+                        </script>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-clipboard-data text-primary" style="font-size: 3rem; opacity: 0.5;"></i>
+                            <div class="mt-3 text-muted small mb-3">点击下方按钮开始健康评估</div>
+                            <button class="btn btn-primary rounded-pill px-4" id="startAssessmentBtn" onclick="loadHealthAssessment()">
+                                <i class="bi bi-play-circle me-2"></i>开始评估
+                            </button>
                         </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start p-3 rounded" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
-                                <i class="bi bi-moon-stars me-2 mt-1" style="font-size: 1.2rem;"></i>
-                                <div>
-                                    <div class="fw-bold small mb-1">充足睡眠</div>
-                                    <div style="font-size: 0.85rem; opacity: 0.9;">保证每天 7-9 小时睡眠，提高免疫力</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start p-3 rounded" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
-                                <i class="bi bi-emoji-smile me-2 mt-1" style="font-size: 1.2rem;"></i>
-                                <div>
-                                    <div class="fw-bold small mb-1">规律作息</div>
-                                    <div style="font-size: 0.85rem; opacity: 0.9;">固定时间起床和就寝，养成良好习惯</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -213,14 +199,38 @@
                     <div class="small text-muted mb-3">AI 专属定制 · 养成好习惯</div>
                 </div>
                 <div class="card-body pt-0">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary mb-2">健康目标</label>
+                        <select class="form-select form-select-sm" id="goalTypeSelect" onchange="saveGoalType()">
+                            <option value="maintain" {% if not user.goal_type or user.goal_type == 'maintain' %}selected{% endif %}>维持健康</option>
+                            <option value="weight_loss" {% if user.goal_type == 'weight_loss' %}selected{% endif %}>减肥</option>
+                            <option value="muscle_gain" {% if user.goal_type == 'muscle_gain' %}selected{% endif %}>增肌</option>
+                        </select>
+                    </div>
+                    
                     {% if latest_plan and latest_plan.get_tasks() %}
-                        <div class="task-list-group shadow-sm mb-4">
+                        <div class="task-list-group shadow-sm mb-3">
                             {% for task in latest_plan.get_tasks() %}
-                            <div class="task-item {% if task.done %}completed{% endif %}" onclick="toggleTask({{ task.id }}, this)">
-                                <div class="task-checkbox"></div>
-                                <span>{{ task.title }}</span>
+                            <div class="task-item {% if task.done %}completed{% endif %}" data-task-id="{{ task.id }}" data-task-title="{{ task.title }}">
+                                <div class="d-flex align-items-center flex-grow-1" onclick="toggleTask({{ task.id }}, this.closest('.task-item'))">
+                                    <div class="task-checkbox"></div>
+                                    <span class="task-title flex-grow-1">{{ task.title }}</span>
+                                </div>
+                                <div class="task-actions ms-2">
+                                    <button class="btn btn-sm btn-link text-primary p-1" onclick="event.stopPropagation(); editTaskFromElement(this)" title="编辑">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-link text-danger p-1" onclick="event.stopPropagation(); deleteTask({{ task.id }})" title="删除">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
                             </div>
                             {% endfor %}
+                        </div>
+                        <div class="mb-3">
+                            <button class="btn btn-sm btn-outline-success w-100 rounded-pill" onclick="showAddTaskForm()">
+                                <i class="bi bi-plus-circle me-1"></i> 添加任务
+                            </button>
                         </div>
                         <div class="accordion" id="planAccordion">
                             <div class="accordion-item border-0 bg-transparent">
@@ -237,18 +247,21 @@
                             </div>
                         </div>
                         <div class="mt-3 text-center">
+                            <button class="btn btn-sm btn-primary rounded-pill me-2" onclick="generateQuickPlan()">
+                                <i class="bi bi-lightning-charge-fill me-1"></i> 重新生成
+                            </button>
                             <a href="{{ url_for('plan.index') }}" class="btn btn-sm btn-outline-primary rounded-pill">
                                 <i class="bi bi-chat-dots me-1"></i> 调整计划
                             </a>
                         </div>
                     {% else %}
-                        <div class="text-center py-5">
+                        <div class="text-center py-4">
                             <div class="text-muted"><i class="bi bi-clipboard-check" style="font-size: 3rem;"></i></div>
-                            <h5 class="mt-3 text-secondary">暂无任务清单</h5>
-                            <p class="text-muted small">前往 AI 顾问，告诉它“帮我制定计划”。</p>
-                            <a href="{{ url_for('plan.index') }}" class="btn btn-primary rounded-pill px-4">
+                            <h6 class="mt-3 text-secondary">暂无任务清单</h6>
+                            <p class="text-muted small mb-3">根据您的健康目标自动生成计划</p>
+                            <button class="btn btn-primary rounded-pill px-4" onclick="generateQuickPlan()" id="generatePlanBtn">
                                 <i class="bi bi-lightning-charge-fill me-1"></i> 立即生成
-                            </a>
+                            </button>
                         </div>
                     {% endif %}
                 </div>
@@ -394,6 +407,494 @@
 
     // 绑定同步按钮点击事件
     document.getElementById('syncBtn').addEventListener('click', syncHealthData);
+
+    // 加载健康状态评估（首次评估）
+    function loadHealthAssessment() {
+        const contentDiv = document.getElementById('assessmentContent');
+        const btn = document.getElementById('startAssessmentBtn');
+        
+        // 显示加载状态
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>评估中...';
+        }
+        
+        contentDiv.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <div class="mt-2 text-muted small">正在生成健康评估...</div>
+            </div>
+        `;
+        
+        fetch('/plan/assessment')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    renderAssessment(data);
+                } else if (data.status === 'incomplete') {
+                    renderIncomplete(data);
+                } else if (data.status === 'data_error') {
+                    renderDataError(data);
+                } else {
+                    renderError(data.message || '健康评估失败，请稍后重试');
+                }
+            })
+            .catch(error => {
+                console.error('Assessment Error:', error);
+                renderError('健康评估失败，请稍后重试');
+            })
+            .finally(() => {
+                if (btn) {
+                    btn.disabled = false;
+                }
+            });
+    }
+
+    // 重新生成评估（强制生成新的）
+    function regenerateAssessment() {
+        const contentDiv = document.getElementById('assessmentContent');
+        const savedContent = document.getElementById('savedAssessmentContent');
+        const targetDiv = savedContent || contentDiv;
+        
+        targetDiv.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <div class="mt-2 text-muted small">正在重新生成健康评估...</div>
+            </div>
+        `;
+        
+        fetch('/plan/assessment/regenerate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                renderAssessment(data);
+                // 刷新页面以更新已保存的评估
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else if (data.status === 'incomplete') {
+                renderIncomplete(data);
+            } else if (data.status === 'data_error') {
+                renderDataError(data);
+            } else {
+                renderError(data.message || '健康评估失败，请稍后重试');
+            }
+        })
+        .catch(error => {
+            console.error('Regenerate Assessment Error:', error);
+            renderError('健康评估失败，请稍后重试');
+        });
+    }
+
+    // 保存用户健康目标
+    function saveGoalType() {
+        const select = document.getElementById('goalTypeSelect');
+        const goalType = select.value;
+        
+        fetch('/plan/save_goal', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({goal_type: goalType})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // 静默保存，不显示提示
+            } else {
+                console.error('保存目标失败:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('保存目标错误:', error);
+        });
+    }
+
+    // 快速生成计划
+    function generateQuickPlan() {
+        const btn = document.getElementById('generatePlanBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>生成中...';
+        }
+        
+        fetch('/plan/generate_quick', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // 生成成功，刷新页面显示新计划
+                setTimeout(() => {
+                    location.reload();
+                }, 500);
+            } else if (data.status === 'data_missing') {
+                // 异常事件流：无法获取健康数据
+                showDataMissingError(data);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-lightning-charge-fill me-1"></i> 立即生成';
+                }
+            } else {
+                alert('计划生成失败：' + (data.message || '请稍后重试'));
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-lightning-charge-fill me-1"></i> 立即生成';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('生成计划错误:', error);
+            alert('计划生成失败，请稍后重试');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-lightning-charge-fill me-1"></i> 立即生成';
+            }
+        });
+    }
+
+    // 显示健康数据缺失错误
+    function showDataMissingError(data) {
+        const missingData = data.missing_data || [];
+        const suggestion = data.suggestion || '建议补充数据或重新连接应用';
+        
+        let message = '⚠️ ' + (data.message || '无法获取健康数据，请检查设置');
+        if (missingData.length > 0) {
+            message += '\n\n缺少的数据：' + missingData.join('、');
+        }
+        message += '\n\n' + suggestion;
+        message += '\n\n点击"确定"前往补充数据，点击"取消"继续。';
+        
+        // 使用确认对话框
+        const result = confirm(message);
+        if (result) {
+            // 根据缺少的数据类型跳转到相应页面
+            if (missingData.includes('身高') || missingData.includes('体重')) {
+                // 缺少个人信息，跳转到设置页面
+                window.location.href = "{{ url_for('user.settings') }}";
+            } else if (missingData.includes('健康记录')) {
+                // 缺少健康记录，跳转到记录页面
+                window.location.href = "{{ url_for('record.index') }}";
+            } else {
+                // 默认跳转到记录页面
+                window.location.href = "{{ url_for('record.index') }}";
+            }
+        }
+    }
+
+    function renderAssessment(data) {
+        const contentDiv = document.getElementById('assessmentContent');
+        const score = data.health_score || 0;
+        const assessments = data.assessments || {};
+        const suggestions = data.suggestions || [];
+        const summary = data.summary || '';
+
+        // 根据分数确定颜色
+        let scoreColor = 'success';
+        let scoreText = '优秀';
+        if (score < 60) {
+            scoreColor = 'danger';
+            scoreText = '需改善';
+        } else if (score < 80) {
+            scoreColor = 'warning';
+            scoreText = '良好';
+        }
+
+        let html = `
+            <div class="text-center mb-4">
+                <div class="d-inline-block position-relative">
+                    <div class="rounded-circle bg-${scoreColor} bg-opacity-10 p-4 d-inline-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
+                        <div class="text-center">
+                            <div class="fs-1 fw-bold text-${scoreColor}">${score}</div>
+                            <div class="small text-muted">健康分数</div>
+                        </div>
+                    </div>
+                    <span class="badge bg-${scoreColor} position-absolute top-0 end-0 translate-middle">${scoreText}</span>
+                </div>
+                ${summary ? `<div class="mt-3 text-muted small">${summary}</div>` : ''}
+            </div>
+        `;
+
+        // 指标评估
+        if (Object.keys(assessments).length > 0) {
+            html += '<div class="mb-3"><h6 class="small fw-bold text-secondary mb-2">指标评估</h6>';
+            html += '<div class="row g-2">';
+            
+            const assessmentItems = [
+                {key: 'bmi', label: 'BMI', icon: 'bi-speedometer2'},
+                {key: 'body_fat', label: '体脂率', icon: 'bi-percent'},
+                {key: 'steps', label: '步数', icon: 'bi-footprint'},
+                {key: 'heart_rate', label: '心率', icon: 'bi-heart-pulse'},
+                {key: 'blood_pressure', label: '血压', icon: 'bi-heart-fill'},
+                {key: 'blood_glucose', label: '血糖', icon: 'bi-droplet'},
+                {key: 'sleep', label: '睡眠', icon: 'bi-moon-stars'},
+                {key: 'water', label: '饮水', icon: 'bi-cup-straw'}
+            ];
+
+            assessmentItems.forEach(item => {
+                const assessment = assessments[item.key];
+                if (assessment) {
+                    let levelColor = 'secondary';
+                    if (assessment.level === '优秀') levelColor = 'success';
+                    else if (assessment.level === '良好') levelColor = 'info';
+                    else if (assessment.level === '需改善') levelColor = 'warning';
+                    else if (assessment.level === '异常') levelColor = 'danger';
+
+                    html += `
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 rounded border" style="background-color: #f8f9fa;">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="bi ${item.icon} me-1 text-${levelColor}"></i>
+                                    <small class="fw-bold">${item.label}</small>
+                                </div>
+                                <div class="small text-muted">${assessment.level || '--'}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            html += '</div></div>';
+        }
+
+        // 改善建议
+        if (suggestions.length > 0) {
+            html += '<div><h6 class="small fw-bold text-secondary mb-2">改善建议</h6>';
+            html += '<div class="list-group list-group-flush">';
+            suggestions.forEach((suggestion, index) => {
+                html += `
+                    <div class="list-group-item border-0 px-0 py-2">
+                        <div class="d-flex align-items-start">
+                            <span class="badge bg-primary bg-opacity-10 text-primary me-2 mt-1">${index + 1}</span>
+                            <small class="text-muted">${suggestion}</small>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div></div>';
+        }
+
+        // 操作按钮
+        html += `
+            <div class="mt-3 text-center">
+                <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="regenerateAssessment()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> 重新评估
+                </button>
+                <a href="{{ url_for('plan.index') }}" class="btn btn-sm btn-primary rounded-pill ms-2">
+                    <i class="bi bi-robot me-1"></i> 咨询AI顾问
+                </a>
+            </div>
+        `;
+
+        // 优先更新已保存评估的容器，如果没有则更新主容器
+        const savedContent = document.getElementById('savedAssessmentContent');
+        if (savedContent) {
+            savedContent.innerHTML = html;
+        } else {
+            contentDiv.innerHTML = html;
+        }
+    }
+
+    function renderIncomplete(data) {
+        const contentDiv = document.getElementById('assessmentContent');
+        const missingFields = data.missing_fields || [];
+        
+        let html = `
+            <div class="text-center py-4">
+                <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                <div class="mt-3 fw-bold text-secondary">健康数据不完整，请补充信息</div>
+                ${missingFields.length > 0 ? `
+                    <div class="mt-2 small text-muted">
+                        缺少：${missingFields.join('、')}
+                    </div>
+                ` : ''}
+                <div class="mt-3">
+                    <a href="{{ url_for('user.settings') }}" class="btn btn-sm btn-primary rounded-pill me-2">
+                        <i class="bi bi-gear me-1"></i> 完善个人信息
+                    </a>
+                    <a href="{{ url_for('record.index') }}" class="btn btn-sm btn-outline-primary rounded-pill">
+                        <i class="bi bi-plus-circle me-1"></i> 记录健康数据
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        contentDiv.innerHTML = html;
+    }
+
+    function renderDataError(data) {
+        const contentDiv = document.getElementById('assessmentContent');
+        const errors = data.errors || [];
+        const suggestion = data.suggestion || '建议重新连接健康应用或设备';
+        
+        let html = `
+            <div class="text-center py-4">
+                <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                <div class="mt-3 fw-bold text-warning">${data.message || '数据异常，请检查健康数据来源'}</div>
+                ${suggestion ? `<div class="mt-2 small text-muted">${suggestion}</div>` : ''}
+        `;
+        
+        if (errors.length > 0) {
+            html += `
+                <div class="mt-3 text-start">
+                    <div class="small fw-bold text-secondary mb-2">异常数据详情：</div>
+                    <div class="list-group list-group-flush">
+            `;
+            errors.forEach(error => {
+                html += `
+                    <div class="list-group-item border-0 px-0 py-1">
+                        <small class="text-danger"><i class="bi bi-x-circle me-1"></i>${error}</small>
+                    </div>
+                `;
+            });
+            html += `</div></div>`;
+        }
+        
+        html += `
+                <div class="mt-4">
+                    <button class="btn btn-sm btn-outline-warning rounded-pill me-2" onclick="loadHealthAssessment()">
+                        <i class="bi bi-arrow-clockwise me-1"></i> 重新评估
+                    </button>
+                    <a href="{{ url_for('record.index') }}" class="btn btn-sm btn-primary rounded-pill">
+                        <i class="bi bi-arrow-repeat me-1"></i> 同步设备数据
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        contentDiv.innerHTML = html;
+    }
+
+    // 显示添加任务表单
+    function showAddTaskForm() {
+        const title = prompt('请输入任务内容：');
+        if (title && title.trim()) {
+            addTask(title.trim());
+        }
+    }
+
+    // 添加任务
+    function addTask(title) {
+        fetch('/plan/add_task', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title: title})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('添加任务失败：' + (data.message || '请稍后重试'));
+            }
+        })
+        .catch(error => {
+            console.error('添加任务错误:', error);
+            alert('添加任务失败，请稍后重试');
+        });
+    }
+
+    // 编辑任务（从元素获取数据）
+    function editTaskFromElement(buttonElement) {
+        const taskItem = buttonElement.closest('.task-item');
+        const taskId = parseInt(taskItem.getAttribute('data-task-id'));
+        const currentTitle = taskItem.getAttribute('data-task-title');
+        editTask(taskId, currentTitle);
+    }
+
+    // 编辑任务
+    function editTask(taskId, currentTitle) {
+        const newTitle = prompt('编辑任务内容：', currentTitle);
+        if (newTitle && newTitle.trim() && newTitle !== currentTitle) {
+            updateTask(taskId, newTitle.trim());
+        }
+    }
+
+    // 更新任务
+    function updateTask(taskId, title) {
+        fetch('/plan/update_task', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({task_id: taskId, title: title})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // 更新页面中的任务标题
+                const taskItem = document.querySelector(`[data-task-id="${taskId}"]`);
+                if (taskItem) {
+                    const titleSpan = taskItem.querySelector('.task-title');
+                    if (titleSpan) {
+                        titleSpan.textContent = title;
+                    }
+                    // 同时更新 data 属性
+                    taskItem.setAttribute('data-task-title', title);
+                }
+            } else {
+                alert('更新任务失败：' + (data.message || '请稍后重试'));
+            }
+        })
+        .catch(error => {
+            console.error('更新任务错误:', error);
+            alert('更新任务失败，请稍后重试');
+        });
+    }
+
+    // 删除任务
+    function deleteTask(taskId) {
+        if (!confirm('确定要删除这个任务吗？')) {
+            return;
+        }
+        
+        fetch('/plan/delete_task', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({task_id: taskId})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // 从页面中移除任务项
+                const taskItem = document.querySelector(`[data-task-id="${taskId}"]`);
+                if (taskItem) {
+                    taskItem.remove();
+                    // 如果任务列表为空，刷新页面
+                    const taskList = document.querySelector('.task-list-group');
+                    if (taskList && taskList.children.length === 0) {
+                        location.reload();
+                    }
+                }
+            } else {
+                alert('删除任务失败：' + (data.message || '请稍后重试'));
+            }
+        })
+        .catch(error => {
+            console.error('删除任务错误:', error);
+            alert('删除任务失败，请稍后重试');
+        });
+    }
+
+    function renderError(message) {
+        const contentDiv = document.getElementById('assessmentContent');
+        contentDiv.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-x-circle text-danger" style="font-size: 3rem;"></i>
+                <div class="mt-3 fw-bold text-danger">${message}</div>
+                <div class="mt-2 small text-muted">建议重新提交评估请求</div>
+                <button class="btn btn-sm btn-outline-primary rounded-pill mt-3" onclick="loadHealthAssessment()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> 重试
+                </button>
+            </div>
+        `;
+    }
+
 </script>
 </body>
 </html>

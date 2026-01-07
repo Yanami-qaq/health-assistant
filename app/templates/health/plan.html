@@ -41,6 +41,14 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-10">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-secondary mb-2">健康目标</label>
+                    <select class="form-select form-select-sm" id="goalTypeSelect" onchange="saveGoalType()">
+                        <option value="maintain" {% if not user.goal_type or user.goal_type == 'maintain' %}selected{% endif %}>维持健康</option>
+                        <option value="weight_loss" {% if user.goal_type == 'weight_loss' %}selected{% endif %}>减肥</option>
+                        <option value="muscle_gain" {% if user.goal_type == 'muscle_gain' %}selected{% endif %}>增肌</option>
+                    </select>
+                </div>
                 <div class="input-wrapper">
                     <input type="text" id="user-input" class="form-control form-control-chat" placeholder="输入您的问题..." autocomplete="off" onkeypress="handleEnter(event)">
                     <button class="btn btn-send ms-2" onclick="sendMessage()" id="send-btn">
@@ -48,7 +56,7 @@
                     </button>
                 </div>
                 <div class="text-center mt-2">
-                    <small class="text-muted" style="font-size: 0.75rem;">AI 将结合您的身高、体重、体脂率等数据进行分析</small>
+                    <small class="text-muted" style="font-size: 0.75rem;">AI 将结合您的健康目标和体征数据进行分析</small>
                 </div>
             </div>
         </div>

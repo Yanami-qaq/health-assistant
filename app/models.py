@@ -15,6 +15,7 @@ class User(db.Model):
     height = db.Column(db.Float)
     weight = db.Column(db.Float)
     medical_history = db.Column(db.Text)
+    goal_type = db.Column(db.String(20), default='maintain')  # 健康目标：weight_loss(减肥), muscle_gain(增肌), maintain(维持健康)
     is_admin = db.Column(db.Boolean, default=False)
     is_banned = db.Column(db.Boolean, default=False)
     can_post = db.Column(db.Boolean, default=True)
@@ -122,3 +123,42 @@ class PlanTask(db.Model):
             return json.loads(self.tasks_json) if self.tasks_json else []
         except:
             return []
+
+
+class HealthAssessment(db.Model):
+    __tablename__ = 'health_assessment'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    health_score = db.Column(db.Integer, nullable=False)  # 健康分数 0-100
+    assessments = db.Column(db.Text)  # JSON格式存储各项指标评估
+    suggestions = db.Column(db.Text)  # JSON格式存储改善建议
+    summary = db.Column(db.Text)  # 评估总结
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = db.relationship('User', backref='assessments')
+    
+    def get_assessments(self):
+        """解析assessments JSON"""
+        try:
+            return json.loads(self.assessments) if self.assessments else {}
+        except:
+            return {}
+    
+    def get_suggestions(self):
+        """解析suggestions JSON"""
+        try:
+            return json.loads(self.suggestions) if self.suggestions else []
+        except:
+            return []
+    
+    def to_dict(self):
+        """转换为字典格式，方便API返回"""
+        return {
+            'status': 'success',
+            'health_score': self.health_score,
+            'assessments': self.get_assessments(),
+            'suggestions': self.get_suggestions(),
+            'summary': self.summary,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None
+        }

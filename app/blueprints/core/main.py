@@ -21,6 +21,10 @@ def dashboard():
     # 使用 Service 层获取数据，保持 Controller 简洁
     data = StatsService.get_dashboard_data(user_id)
 
+    # 检查是否有已保存的评估结果
+    from app.services.assessment_service import AssessmentService
+    saved_assessment = AssessmentService.get_latest_assessment(user_id)
+    
     return render_template('main/dashboard.html',
                            user=data['user'],
                            nickname=session.get('nickname'),
@@ -28,7 +32,8 @@ def dashboard():
                            latest_plan=data['latest_plan'],
                            today_score=data['today_score'],
                            streak_days=data['streak_days'],
-                           heatmap_data=data['heatmap_data'])
+                           heatmap_data=data['heatmap_data'],
+                           saved_assessment=saved_assessment)
 
 
 # 生成报告预览页

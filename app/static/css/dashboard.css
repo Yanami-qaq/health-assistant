@@ -43,6 +43,7 @@ body {
 }
 .task-item:last-child { border-bottom: none; }
 .task-item:hover { background-color: #f8f9fa; }
+.task-item:hover .task-actions { opacity: 1; }
 
 .task-checkbox {
     width: 20px; height: 20px; margin-right: 12px; cursor: pointer;
@@ -51,7 +52,22 @@ body {
 }
 .task-item.completed .task-checkbox { background-color: #198754; border-color: #198754; }
 .task-item.completed .task-checkbox::after { content: '✔'; color: white; font-size: 12px; }
-.task-item.completed span { text-decoration: line-through; color: #adb5bd; }
+.task-item.completed .task-title { text-decoration: line-through; color: #adb5bd; }
+
+.task-actions {
+    opacity: 0;
+    transition: opacity 0.2s;
+    display: flex;
+    gap: 4px;
+}
+.task-actions .btn-link {
+    padding: 2px 6px;
+    font-size: 0.875rem;
+    text-decoration: none;
+}
+.task-actions .btn-link:hover {
+    opacity: 0.8;
+}
 
 /* === 计划书滚动区 === */
 .plan-content-box {
