@@ -21,6 +21,12 @@ def profile_setup():
                 flash('输入无效，请重新输入：身高必须在 50-250 cm 之间')
                 return redirect(url_for('user.profile_setup'))
             
+            # 验证体重
+            weight_val = float(request.form.get('weight'))
+            if weight_val < 20 or weight_val > 300:
+                flash('输入无效，请重新输入：体重必须在 20-300 kg 之间')
+                return redirect(url_for('user.profile_setup'))
+            
             # 验证出生年份
             birth_year_val = int(request.form.get('birth_year'))
             if birth_year_val < 1900 or birth_year_val > 2025:
@@ -30,6 +36,7 @@ def profile_setup():
             user.gender = request.form.get('gender')
             user.birth_year = birth_year_val
             user.height = height_val
+            user.weight = weight_val
             user.medical_history = request.form.get('medical_history')
             db.session.commit()
             flash('个人资料设置成功')
@@ -62,8 +69,19 @@ def settings():
                 user.height = height_float
             else:
                 user.height = None
+            
+            # 处理可能为空的体重字段并验证范围
+            weight_val = request.form.get('weight')
+            if weight_val:
+                weight_float = float(weight_val)
+                if weight_float < 20 or weight_float > 300:
+                    flash('输入无效，请重新输入：体重必须在 20-300 kg 之间')
+                    return redirect(url_for('user.settings'))
+                user.weight = weight_float
+            else:
+                user.weight = None
         except ValueError:
-            flash('输入无效，请重新输入：身高必须是数字')
+            flash('输入无效，请重新输入：身高和体重必须是数字')
             return redirect(url_for('user.settings'))
 
         user.medical_history = request.form.get('medical_history')

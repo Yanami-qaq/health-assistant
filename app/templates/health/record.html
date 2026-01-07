@@ -73,11 +73,13 @@
                     </div>
 
                     {% if not edit_record %}
-                    <div>
-                        <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="handleFileUpload(this)">
-                        <button type="button" class="btn btn-sm btn-sync rounded-pill px-3 py-2 shadow-sm" onclick="document.getElementById('importFile').click()">
-                            <i class="bi bi-upload me-1"></i> <span class="d-none d-sm-inline">导入 CSV</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" id="syncDeviceBtn" class="btn btn-sm btn-sync rounded-pill px-3 py-2 shadow-sm">
+                            <i class="bi bi-arrow-repeat me-1"></i> <span class="d-none d-sm-inline">同步设备数据</span>
                         </button>
+                        <small class="text-muted d-none d-lg-inline" style="font-size: 0.75rem;">
+                            <i class="bi bi-info-circle me-1"></i>模拟智能设备同步
+                        </small>
                     </div>
                     {% else %}
                     <a href="{{ url_for('record.index') }}" class="btn btn-sm btn-light border rounded-pill text-muted"><i class="bi bi-x-lg"></i> 取消</a>
@@ -272,34 +274,55 @@
         return true;
     });
 
-    function handleFileUpload(input) {
-        if (input.files.length === 0) return;
-        const file = input.files[0];
-        const formData = new FormData();
-        formData.append('file', file);
-        const btn = document.querySelector('.btn-sync');
-        const originalContent = '<i class="bi bi-upload me-1"></i> <span class="d-none d-sm-inline">导入 CSV</span>';
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 解析中...';
+    // 智能设备数据同步
+    document.getElementById('syncDeviceBtn')?.addEventListener('click', function() {
+        const btn = this;
         btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 同步中...';
 
-        fetch('/api/upload_data', { method: 'POST', body: formData })
-        .then(response => response.json())
-        .then(result => {
-            if (result.status === 'success') {
-                const data = result.data;
-                // 自动回填
-                const fields = ['date', 'weight', 'steps', 'calories', 'sleep_hours', 'heart_rate', 'blood_pressure_high', 'blood_pressure_low', 'note', 'body_fat', 'water_intake', 'blood_glucose'];
-                fields.forEach(id => {
-                    if(data[id] && document.getElementById(id)) document.getElementById(id).value = data[id];
-                });
+        // 模拟生成随机健康数据（从智能设备获取）
+        const baseWeight = {{ user.weight if user.weight else 70 }};
+        const weightVariation = (Math.random() - 0.5) * 1;
+        
+        const mockData = {
+            steps: Math.floor(Math.random() * 16000) + 2000,
+            calories: Math.floor(Math.random() * 600) + 200,
+            sleep: parseFloat((Math.random() * 4 + 5).toFixed(1)),
+            heart_rate: Math.floor(Math.random() * 41) + 50,
+            blood_pressure_high: Math.floor(Math.random() * 30) + 110,
+            blood_pressure_low: Math.floor(Math.random() * 20) + 70,
+            weight: parseFloat((baseWeight + weightVariation).toFixed(1)),
+            body_fat: parseFloat((Math.random() * 15 + 15).toFixed(1)),
+            blood_glucose: parseFloat((Math.random() * 2 + 4.0).toFixed(1))
+        };
 
-                btn.classList.remove('btn-sync'); btn.classList.add('btn-success');
-                btn.innerHTML = '<i class="bi bi-check-lg"></i> 成功';
-                setTimeout(() => { btn.innerHTML = originalContent; btn.classList.remove('btn-success'); btn.classList.add('btn-sync'); btn.disabled = false; input.value = ''; }, 2000);
-            } else { alert('失败：' + result.message); btn.innerHTML = originalContent; btn.disabled = false; }
+        fetch('/api/upload_health_data', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(mockData)
         })
-        .catch(error => { console.error(error); alert('网络错误'); btn.innerHTML = originalContent; btn.disabled = false; });
-    }
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                btn.classList.remove('btn-sync');
+                btn.classList.add('btn-success');
+                btn.innerHTML = '<i class="bi bi-check-lg"></i> 同步成功';
+                
+                // 数据已保存到数据库，1.5秒后刷新页面显示最新记录
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                throw new Error(data.message || '同步失败');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('同步失败：' + err.message);
+            btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> <span class="d-none d-sm-inline">同步设备数据</span>';
+            btn.disabled = false;
+        });
+    });
 </script>
 </body>
 </html>

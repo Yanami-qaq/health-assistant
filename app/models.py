@@ -13,6 +13,7 @@ class User(db.Model):
     gender = db.Column(db.String(10))
     birth_year = db.Column(db.Integer)
     height = db.Column(db.Float)
+    weight = db.Column(db.Float)
     medical_history = db.Column(db.Text)
     is_admin = db.Column(db.Boolean, default=False)
     is_banned = db.Column(db.Boolean, default=False)

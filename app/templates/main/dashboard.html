@@ -21,7 +21,7 @@
             <div class="me-3 text-end d-none d-sm-block">
                 <div class="fw-bold text-dark">{{ nickname }}</div>
                 <div class="small text-muted">
-                    {% if streak_days > 0 %}🔥 连签 {{ streak_days }} 天{% else %}记得打卡哦{% endif %}
+                    {% if streak_days > 0 %}连签 {{ streak_days }} 天{% else %}记得打卡哦{% endif %}
                 </div>
             </div>
 
@@ -57,7 +57,7 @@
                         <h5 class="opacity-75 mb-1">今日活力值</h5>
                         <div class="vitality-score mb-2">{{ today_score }}</div>
                         <div class="badge bg-white bg-opacity-20 rounded-pill px-3 py-2 fw-normal">
-                            {% if today_score > 80 %}状态爆棚 🔥{% elif today_score > 60 %}继续加油 👍{% else %}该动动了 🚶{% endif %}
+                            {% if today_score > 80 %}状态爆棚{% elif today_score > 60 %}继续加油{% else %}该动动了{% endif %}
                         </div>
                     </div>
                     <i class="bi bi-heart-pulse-fill" style="font-size: 4rem; opacity: 0.2;"></i>
@@ -97,11 +97,11 @@
         </div>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-4 align-items-start">
         <div class="col-lg-8">
             <div class="card custom-card mb-4 p-3">
                 <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0">🏃 运动与体重</h5>
+                    <h5 class="fw-bold mb-0"><i class="bi bi-activity me-2"></i>运动与体重</h5>
                     <span class="badge bg-light text-secondary">最近 14 天</span>
                 </div>
                 <div class="card-body">
@@ -109,23 +109,70 @@
                 </div>
             </div>
 
-            <div class="row g-4">
+            <div class="row g-4 mb-4">
                 <div class="col-md-4">
                     <div class="card custom-card p-3 h-100">
-                        <div class="card-header bg-white border-0 p-0 mb-3"><h6 class="fw-bold mb-0 text-secondary" style="font-size: 0.9rem;">⚖️ 体脂 & 睡眠</h6></div>
+                        <div class="card-header bg-white border-0 p-0 mb-3"><h6 class="fw-bold mb-0 text-secondary" style="font-size: 0.9rem;"><i class="bi bi-percent me-1"></i>体脂 & 睡眠</h6></div>
                         <div style="height: 150px;"><canvas id="bodySleepChart"></canvas></div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card custom-card p-3 h-100">
-                        <div class="card-header bg-white border-0 p-0 mb-3"><h6 class="fw-bold mb-0 text-secondary" style="font-size: 0.9rem;">💧 饮水量 (ml)</h6></div>
+                        <div class="card-header bg-white border-0 p-0 mb-3"><h6 class="fw-bold mb-0 text-secondary" style="font-size: 0.9rem;"><i class="bi bi-droplet me-1"></i>饮水量 (ml)</h6></div>
                         <div style="height: 150px;"><canvas id="waterChart"></canvas></div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card custom-card p-3 h-100">
-                        <div class="card-header bg-white border-0 p-0 mb-3"><h6 class="fw-bold mb-0 text-secondary" style="font-size: 0.9rem;">🩺 心肺 & 血糖</h6></div>
+                        <div class="card-header bg-white border-0 p-0 mb-3"><h6 class="fw-bold mb-0 text-secondary" style="font-size: 0.9rem;"><i class="bi bi-heart-pulse me-1"></i>心肺 & 血糖</h6></div>
                         <div style="height: 150px;"><canvas id="cardioChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card custom-card border-0">
+                <div class="card-header bg-white border-0 pt-4 pb-0">
+                    <h5 class="fw-bold text-info"><i class="bi bi-lightbulb me-2"></i>健康小贴士</h5>
+                    <div class="small text-muted mb-3">养成健康生活习惯</div>
+                </div>
+                <div class="card-body pt-0">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start p-3 rounded" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                <i class="bi bi-water me-2 mt-1" style="font-size: 1.2rem;"></i>
+                                <div>
+                                    <div class="fw-bold small mb-1">每日饮水</div>
+                                    <div style="font-size: 0.85rem; opacity: 0.9;">建议每天饮水 2000ml，少量多次更健康</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start p-3 rounded" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                                <i class="bi bi-heart-pulse me-2 mt-1" style="font-size: 1.2rem;"></i>
+                                <div>
+                                    <div class="fw-bold small mb-1">适度运动</div>
+                                    <div style="font-size: 0.85rem; opacity: 0.9;">每天步数达到 10000 步，保持身体活力</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start p-3 rounded" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                                <i class="bi bi-moon-stars me-2 mt-1" style="font-size: 1.2rem;"></i>
+                                <div>
+                                    <div class="fw-bold small mb-1">充足睡眠</div>
+                                    <div style="font-size: 0.85rem; opacity: 0.9;">保证每天 7-9 小时睡眠，提高免疫力</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start p-3 rounded" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+                                <i class="bi bi-emoji-smile me-2 mt-1" style="font-size: 1.2rem;"></i>
+                                <div>
+                                    <div class="fw-bold small mb-1">规律作息</div>
+                                    <div style="font-size: 0.85rem; opacity: 0.9;">固定时间起床和就寝，养成良好习惯</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -145,8 +192,15 @@
                         </div>
                     </div>
 
+                    <div class="alert alert-info py-2 px-3 mb-3 small" style="font-size: 0.85rem; border-left: 3px solid #0dcaf0;">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <b>同步内容：</b>体重、体脂率、血糖、步数、卡路里、睡眠、心率、血压<br>
+                        <i class="bi bi-lightbulb me-1"></i>
+                        <b>设备模拟：</b>智能体重秤（体重+体脂）、血糖仪、智能手表/手环（其他数据）
+                    </div>
+
                     <button id="syncBtn" class="btn btn-outline-primary w-100 rounded-pill btn-sm">
-                        <i class="bi bi-arrow-repeat me-1"></i> 一键同步今日数据
+                        <i class="bi bi-arrow-repeat me-1"></i> 同步今日数据
                     </button>
 
                     <div id="syncResult" class="mt-3 small rounded-3 p-2 bg-light" style="display:none;"></div>
@@ -221,21 +275,38 @@
 
     initDashboardCharts(chartData);
 
-    // 🔥 新增：智能设备同步逻辑
-    document.getElementById('syncBtn').addEventListener('click', function() {
-        const btn = this;
+    // 智能设备同步逻辑
+    function syncHealthData() {
+        const btn = document.getElementById('syncBtn');
         const resBox = document.getElementById('syncResult');
 
         // 1. 改变按钮状态
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 同步中...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 正在连接设备...';
         resBox.style.display = 'none';
 
-        // 2. 模拟生成随机数据 (步数2000-18000, 卡路里200-800, 睡眠5-9小时)
+        // 2. 模拟生成随机数据（模拟从智能设备获取）
+        // 步数：2000-18000, 卡路里：200-800, 睡眠：5-9小时
+        // 心率：50-90 bpm（静息心率）
+        // 血压：高压110-139, 低压70-89（正常血压范围）
+        // 体重：根据用户设置的体重进行微调（-0.5 到 +0.5 kg）
+        // 体脂率：15-30%（正常范围）
+        // 血糖：4.0-6.0 mmol/L（空腹正常血糖）
+        
+        // 从用户设置中读取基础体重（如果有的话）
+        const baseWeight = {{ user.weight if user.weight else 70 }};  // 默认70kg
+        const weightVariation = (Math.random() - 0.5) * 1;  // -0.5 到 +0.5 kg的波动
+        
         const mockData = {
             steps: Math.floor(Math.random() * 16000) + 2000,
             calories: Math.floor(Math.random() * 600) + 200,
-            sleep: (Math.random() * 4 + 5).toFixed(1)
+            sleep: parseFloat((Math.random() * 4 + 5).toFixed(1)),
+            heart_rate: Math.floor(Math.random() * 41) + 50,
+            blood_pressure_high: Math.floor(Math.random() * 30) + 110,
+            blood_pressure_low: Math.floor(Math.random() * 20) + 70,
+            weight: parseFloat((baseWeight + weightVariation).toFixed(1)),
+            body_fat: parseFloat((Math.random() * 15 + 15).toFixed(1)),
+            blood_glucose: parseFloat((Math.random() * 2 + 4.0).toFixed(1))
         };
 
         // 3. 发送到后端 API
@@ -244,37 +315,85 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(mockData)
         })
-        .then(response => response.json())
+        .then(response => {
+            // 检查HTTP状态
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || '无法获取数据，请检查网络连接');
+                });
+            }
+            return response.json();
+        })
         .then(data => {
             resBox.style.display = 'block';
 
             if (data.status === 'success') {
+                // 同步成功
                 resBox.className = 'mt-3 small rounded-3 p-2 bg-success bg-opacity-10 text-success border border-success';
+                
+                // 同步成功
                 resBox.innerHTML = `
-                    <div class="fw-bold"><i class="bi bi-check-circle-fill"></i> ${data.message}</div>
-                    <div class="mt-1">
-                        🏃 步数: <b>${data.data.steps}</b><br>
-                        🔥 卡路里: <b>${data.data.calories}</b><br>
-                        😴 睡眠: <b>${data.data.sleep}h</b>
+                    <div class="fw-bold mb-2">
+                        <i class="bi bi-check-circle-fill"></i> ${data.message}
+                    </div>
+                    <div class="small" style="line-height: 1.8;">
+                        <i class="bi bi-speedometer2"></i> 体重: <b>${data.data.weight}</b> kg<br>
+                        <i class="bi bi-pie-chart"></i> 体脂率: <b>${data.data.body_fat}</b> %<br>
+                        <i class="bi bi-droplet-fill"></i> 血糖: <b>${data.data.blood_glucose}</b> mmol/L<br>
+                        <i class="bi bi-footprint"></i> 步数: <b>${data.data.steps}</b> 步<br>
+                        <i class="bi bi-fire"></i> 卡路里: <b>${data.data.calories}</b> kcal<br>
+                        <i class="bi bi-moon-stars"></i> 睡眠: <b>${data.data.sleep}</b> 小时<br>
+                        <i class="bi bi-heart-pulse"></i> 心率: <b>${data.data.heart_rate}</b> bpm<br>
+                        <i class="bi bi-heart-fill"></i> 血压: <b>${data.data.blood_pressure_high}/${data.data.blood_pressure_low}</b> mmHg
                     </div>
                 `;
-                btn.innerHTML = '<i class="bi bi-check-lg"></i> 同步完成';
+                
+                btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> 同步完成';
+                btn.className = 'btn btn-success w-100 rounded-pill btn-sm';
 
-                // 1.5秒后自动刷新页面，让图表更新
-                setTimeout(() => location.reload(), 1500);
+                // 2秒后自动刷新页面，更新图表和目标达成情况
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
             } else {
-                throw new Error(data.message || '未知错误');
+                throw new Error(data.message || '数据获取失败，请稍后再试');
             }
         })
         .catch(err => {
+            // 错误处理
             resBox.style.display = 'block';
             resBox.className = 'mt-3 small rounded-3 p-2 bg-danger bg-opacity-10 text-danger border border-danger';
-            resBox.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> 同步失败: ${err.message || '网络连接错误'}`;
+            
+            let errorMessage = '';
+            const errMsg = err.message || '';
 
+            // 根据错误类型显示不同提示
+            if (errMsg.includes('网络') || errMsg.includes('Failed to fetch')) {
+                errorMessage = '<i class="bi bi-wifi-off"></i> 无法获取数据，请检查网络连接';
+            } else if (errMsg.includes('异常') || errMsg.includes('数据异常')) {
+                errorMessage = '<i class="bi bi-exclamation-triangle-fill"></i> 获取的数据异常，请检查设备或稍后重试';
+            } else if (errMsg.includes('失败')) {
+                errorMessage = '<i class="bi bi-x-circle-fill"></i> 数据获取失败，请稍后再试';
+            } else {
+                errorMessage = `<i class="bi bi-exclamation-triangle-fill"></i> ${errMsg}`;
+            }
+
+            resBox.innerHTML = `
+                <div class="fw-bold">${errorMessage}</div>
+                <button class="btn btn-sm btn-outline-danger mt-2 w-100" onclick="syncHealthData()">
+                    <i class="bi bi-arrow-clockwise"></i> 重试
+                </button>
+            `;
+
+            // 恢复按钮状态
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> 重试';
+            btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> 重新同步';
+            btn.className = 'btn btn-outline-primary w-100 rounded-pill btn-sm';
         });
-    });
+    }
+
+    // 绑定同步按钮点击事件
+    document.getElementById('syncBtn').addEventListener('click', syncHealthData);
 </script>
 </body>
 </html>
